@@ -6,7 +6,7 @@
 # October 11 2014
 #
 
-# TODO | -
+# TODO | - glBegin/glEnd context manager (with statement)
 #        -
 #
 # SPEC | -
@@ -35,7 +35,7 @@ from pygame.locals import *
 from pygame.constants import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
- 
+
 # IMPORT OBJECT LOADER
 from OBJFileLoader import *
  
@@ -56,7 +56,7 @@ glShadeModel(GL_SMOOTH)           # most obj files expect to be smooth-shaded
  
 # LOAD OBJECT AFTER PYGAME INIT
 # obj = OBJ(sys.argv[1], swapyz=True)
-obj = OBJ('villa.obj', swapyz=True)
+obj = OBJ('data/villa.obj', swapyz=True)
 
  
 clock = pygame.time.Clock()
