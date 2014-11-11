@@ -18,9 +18,23 @@
 
 import pygame
 from OpenGL.GL import *
+from contextlib import contextmanager
 
 
- 
+@contextmanager
+def drawPrimitives(mode):
+    '''
+    Context manager for OpenGL primitive rendering, eg.
+    with drawPrimitives(GL_POLYGON):
+        # Draw some polygons
+        ...
+    '''
+    glBegin(mode)
+    yield
+    glEnd()
+
+
+
 def MTL(filename):
 
     '''
@@ -84,11 +98,13 @@ class OBJ:
 
         for line in open(filename, 'r'):
 
+            # Skip comments
             if line.startswith('#'):
                 continue
             
             values = line.split()
 
+            # Skip empty lines
             if not values:
                 continue
 
@@ -107,9 +123,10 @@ class OBJ:
                 self.texcoords.append([float(v) for v in values[1:3]])
             elif values[0] in ('usemtl', 'usemat'):
                 material = values[1]
+                print(material)
             elif values[0] == 'mtllib':
                 print('Values:', values)
-                self.mtl = MTL(values[1])
+                self.mtl = MTL('data/%s' % values[1]) # TODO | Fix relative path bug
             elif values[0] == 'f':
                 face = []
                 texcoords = []

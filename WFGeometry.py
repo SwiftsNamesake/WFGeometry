@@ -7,7 +7,7 @@
 #
 
 # TODO | - glBegin/glEnd context manager (with statement)
-#        -
+#        - Event handlers
 #
 # SPEC | -
 #        -
@@ -56,7 +56,7 @@ glShadeModel(GL_SMOOTH)           # most obj files expect to be smooth-shaded
  
 # LOAD OBJECT AFTER PYGAME INIT
 # obj = OBJ(sys.argv[1], swapyz=True)
-obj = OBJ('data/villa.obj', swapyz=True)
+obj = OBJ(['data/villa.obj', 'data/square.obj'][1], swapyz=False)
 
  
 clock = pygame.time.Clock()
@@ -72,6 +72,7 @@ rx, ry = (0,0)
 tx, ty = (0,0)
 zpos = 5
 rotate = move = False
+
 while 1:
     clock.tick(30)
     for e in pygame.event.get():
