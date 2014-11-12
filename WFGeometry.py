@@ -349,12 +349,14 @@ def bindEvents():
 		glRotate(camera.rz, 0, 0, 1)
 		glCallList(obj.gl_list)
 
-		if False:
+		if True:
 			glTranslate(1.2, 0.0, 0.0)
+			glRotate(-27, 0, 0, 1)
 			glCallList(obj.gl_list)
-			glTranslate(-1.2, 1.2, 0.0)
+			glRotate(27, 0, 0, 1)
+			glTranslate(-1.2, 1.8, 0.0)
 			glCallList(obj.gl_list)
-			glTranslate(0.0, -2*1.2, 0.0)
+			glTranslate(0.0, -2*1.8, 0.0)
 			glCallList(obj.gl_list)
 
 		pygame.display.flip()
@@ -364,7 +366,6 @@ def bindEvents():
 	dispatcher.bind({'type': KEYUP, 'key': K_LEFT}, lambda event: camera.setRotating(False))
 
 	dispatcher.bind({'type': KEYDOWN, 'key': K_RIGHT}, lambda event: camera.rotate(-4, 0))
-	# dispatcher.bind({'type': KEYDOWN, 'key': K_RIGHT, 'mod': 2}, lambda event: camera.setRotation(camera.rx-45))
 
 	dispatcher.bind({'type': KEYUP, 'key': K_RIGHT}, lambda event: camera.setRotating(False))
 
@@ -381,9 +382,7 @@ def bindEvents():
 
 	dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 4}, lambda event: camera.setTranslation(z=camera.tz+1.2))
 	dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 5}, lambda event: camera.setTranslation(z=camera.tz-1.2))
-
-	# dispatcher.bind({'type': KEYDOWN, 'key': K_LEFT}, lambda event: print('Another handler'))
-
+	
 	dispatcher.always = doAlways
 
 	return dispatcher
