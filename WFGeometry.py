@@ -5,9 +5,12 @@
 # Unknown (http://www.pygame.org/wiki/OBJFileLoader)
 # October 11 2014
 #
+# Subsequent edits by Jonatan H Sundqvist
+#
 
-# TODO | - glBegin/glEnd context manager (with statement)
-#        - Event handlers
+# TODO | - Context manager for glBegin/glEnd (with statement) (✓)
+#        - Event handlers (✓)
+#        - 
 #
 # SPEC | -
 #        -
@@ -45,6 +48,7 @@ class EventDispatcher:
 	# TODO: Hierachies of events, multiple handlers, replace or add
 	# TODO: Pattern or Event class implementing aliases, comparisons, etc.
 	# TODO: Queries
+	# TODO: Composite events, control keys (eg. Ctrl+Alt+A, Mousemotion+Left mouse button)
 	# TODO: Nested dicts or objects (?)
 	# TODO: Handle polling as well (?)
 	# TODO: Annotations, error handling
@@ -88,13 +92,14 @@ class EventDispatcher:
 	def query(self, event):
 
 		'''
-		Retrieves all event handlers whose patterns
+		Retrieves all event handlers whose pattern
 		matches that of the incoming event (cf. bind for details).
 
 		'''
 
 		# TODO: Use issubset for comparisons
 		# TODO: Determine and - if necessary - improve performance
+		# TODO: Complete overview of event types and related data
 		match = frozenset((attr, getattr(event, attr)) for attr in ['type', 'key', 'button', 'rel'] if hasattr(event, attr))
 		self.DEBUG(match)
 		# TODO: Optionally return mapping between matching patterns and their corresponding handlers (?)
@@ -145,8 +150,6 @@ class EventDispatcher:
 
 
 
-
-
 # Basic OBJ file viewer. needs objloader from:
 #  http://www.pygame.org/wiki/OBJFileLoader
 # LMB + move: rotate
@@ -160,6 +163,7 @@ from OpenGL.GLU import *
 
 # IMPORT OBJECT LOADER
 from OBJFileLoader import *
+
 
 
 def InitGL():
@@ -182,20 +186,21 @@ def InitGL():
 	glEnable(GL_LIGHTING)
 	glEnable(GL_COLOR_MATERIAL)
 	glEnable(GL_DEPTH_TEST)
-	glShadeModel(GL_SMOOTH)           # most obj files expect to be smooth-shaded
+	glShadeModel(GL_SMOOTH)           # Most obj files expect to be smooth-shaded
 	 
-	# LOAD OBJECT AFTER PYGAME INIT
+	# Load object after pygame init
 	# obj = OBJ(sys.argv[1], swapyz=True)
-	obj = OBJ(['data/villa.obj', 'data/square.obj', 'data/cube.obj'][2], swapyz=False)
+	obj = OBJ(['data/villa.obj', 'data/square.obj', 'data/cube.obj', 'data/hombre#2.obj'][3], swapyz=False)
 
 	glMatrixMode(GL_PROJECTION)
 	glLoadIdentity()
 	width, height = viewport
-	gluPerspective(90.0, width/float(height), 1, 100.0)
+	gluPerspective(90.0, width/height, 1, 100.0)
 	glEnable(GL_DEPTH_TEST)
 	glMatrixMode(GL_MODELVIEW)
 
 	return obj
+
 
 
 def mainloop():
@@ -247,14 +252,74 @@ def mainloop():
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 		glLoadIdentity()
-	 
+
 		# RENDER OBJECT
 		glTranslate(tx/20., ty/20., - zpos)
 		glRotate(ry, 1, 0, 0)
 		glRotate(rx, 0, 1, 0)
 		glCallList(obj.gl_list)
-	 
+
 		pygame.display.flip()
+
+
+
+class Camera:
+
+	'''
+	Animation data
+	
+	'''
+	
+	def __init__(self):
+
+		self.rx, self.ry, self.rz 		= 0, 0,  0 # Rotation
+		self.tx, self.ty, self.tz 		= 0, 0, -5 # Translation
+		self.drx, self.dry, self.drz 	= 0, 0,  0 # Rotation delta
+		self.dtx, self.dty, self.dtz 	= 0, 0,  0 # Translation delta
+		
+		self.rotating 	 = False
+		self.translating = False
+
+
+	def set(self, **kwargs):
+		for key, val in kwargs.items():
+			setattr(self, key, val)
+
+
+	def rotate(self, x=0, y=0, z=0):
+		self.set(drx=x, dry=y, drz=z, rotating=True)
+
+
+	def setRotation(self, x=0, y=0, z=0):
+		self.set(rx=x, ry=y, rz=z)
+
+
+	def setTranslation(self, x=0, y=0, z=0):
+		self.set(tx=x, ty=y, tz=z)
+
+
+	def translate(self, x=0, y=0, z=0):
+		self.set(dtx=x, dty=y, dtz=z, translating=True)
+
+
+	def setRotating(self, rotating):
+		self.set(rotating=rotating)
+
+
+	def setTranslating(self, translating):
+		self.set(translating=translating)
+
+
+	def animate(self):
+		if self.rotating:
+			self.rx += self.drx
+			self.ry += self.dry
+			self.rz += self.drz
+
+		if self.translating:
+			self.tx += self.dtx
+			self.ty += self.dty
+			self.tz += self.dtz
 
 
 
@@ -265,73 +330,57 @@ def bindEvents():
 
 	'''
 
-
-	class Camera:
-		# Animation data
-		rx, ry, rz 		= 0, 0, -5 # Rotation
-		tx, ty, tz 		= 0, 0,  0 # Translation
-		drx, dry, drz 	= 0, 0,  0 # Rotation delta
-		dtx, dty, dtz 	= 0, 0,  0 # Translation delta
-		
-		rotating = move = False
-
-		def rotate(x=0, y=0, z=0):
-			print('Setting rotation')
-			Camera.rotating = True
-			Camera.drx, Camera.dry, Camera.drz = x, y, z
-
-		def setRotation(x=0, y=0, z=0):
-			Camera.rx, Camera.ry, Camera.rz = x, y, z
-
-		def translate(x=0, y=0, z=0):
-			print('Setting rotation')
-			Camera.move = True
-			Camera.dtx, Camera.dty, Camera.dtz  = x, y, z
-
-		def setRotating(rotating):
-			Camera.rotating = rotating
-
-		def setTranslating(translating):
-			Camera.move = translating
-
-
 	obj = InitGL()
 	dispatcher = EventDispatcher()
+	camera = Camera()
 
 
 	def doAlways(event):
 
-		if Camera.rotating:
-			Camera.rx += Camera.drx
-			Camera.ry += Camera.dry
-			Camera.rz += Camera.drz
-
-		if Camera.move:
-			Camera.tx += Camera.dtx
-			Camera.ty += Camera.dty
-			Camera.tz += Camera.dtz
+		camera.animate()
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 		glLoadIdentity()
-	 
-		# RENDER OBJECT
-		glTranslate(Camera.tx/20.0, Camera.ty/20.0, Camera.tz/20.0)
-		glRotate(Camera.ry, 1, 0, 0)
-		glRotate(Camera.rx, 0, 1, 0)
+
+		# Render object
+		glTranslate(camera.tx/20.0, camera.ty/20.0, camera.tz/20.0)
+		glRotate(camera.ry, 0, 1, 0)
+		glRotate(camera.rx, 1, 0, 0)
+		glRotate(camera.rz, 0, 0, 1)
 		glCallList(obj.gl_list)
-	 
+
+		if False:
+			glTranslate(1.2, 0.0, 0.0)
+			glCallList(obj.gl_list)
+			glTranslate(-1.2, 1.2, 0.0)
+			glCallList(obj.gl_list)
+			glTranslate(0.0, -2*1.2, 0.0)
+			glCallList(obj.gl_list)
+
 		pygame.display.flip()
 
 
-	dispatcher.bind({'type': KEYDOWN, 'key': K_LEFT}, lambda event: Camera.rotate(2, 0))
-	dispatcher.bind({'type': KEYUP, 'key': K_LEFT}, lambda event: Camera.setRotating(False))
-	dispatcher.bind({'type': KEYDOWN, 'key': K_RIGHT}, lambda event: Camera.rotate(-2) if event.mod != 2 else Camera.setRotation(Camera.rx-45))
-	dispatcher.bind({'type': KEYUP, 'key': K_RIGHT}, lambda event: Camera.setRotating(False))
+	dispatcher.bind({'type': KEYDOWN, 'key': K_LEFT}, lambda event: camera.rotate(4, 0))
+	dispatcher.bind({'type': KEYUP, 'key': K_LEFT}, lambda event: camera.setRotating(False))
 
-	dispatcher.bind({'type': KEYDOWN, 'key': K_UP}, lambda event: Camera.translate(z=4))
-	dispatcher.bind({'type': KEYUP, 'key': K_UP}, lambda event: Camera.setTranslating(False))
-	dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, lambda event: Camera.translate(z=-4))
-	dispatcher.bind({'type': KEYUP, 'key': K_DOWN}, lambda event: Camera.setTranslating(False))
+	dispatcher.bind({'type': KEYDOWN, 'key': K_RIGHT}, lambda event: camera.rotate(-4, 0))
+	# dispatcher.bind({'type': KEYDOWN, 'key': K_RIGHT, 'mod': 2}, lambda event: camera.setRotation(camera.rx-45))
+
+	dispatcher.bind({'type': KEYUP, 'key': K_RIGHT}, lambda event: camera.setRotating(False))
+
+	dispatcher.bind({'type': KEYDOWN, 'key': K_UP}, lambda event: camera.translate(z=4))
+	dispatcher.bind({'type': KEYUP, 'key': K_UP}, lambda event: camera.setTranslating(False))
+	dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, lambda event: camera.translate(z=-4))
+	dispatcher.bind({'type': KEYUP, 'key': K_DOWN}, lambda event: camera.setTranslating(False))
+
+	dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 1}, lambda event: camera.rotate(z=-4))
+	dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 1}, lambda event: camera.setRotating(False))
+
+	dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 3}, lambda event: camera.rotate(z=4))
+	dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 3}, lambda event: camera.setRotating(False))
+
+	dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 4}, lambda event: camera.setTranslation(z=camera.tz+1.2))
+	dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 5}, lambda event: camera.setTranslation(z=camera.tz-1.2))
 
 	# dispatcher.bind({'type': KEYDOWN, 'key': K_LEFT}, lambda event: print('Another handler'))
 
