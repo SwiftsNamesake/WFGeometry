@@ -217,66 +217,6 @@ def InitGL():
 
 
 
-def mainloop():
-
-	clock = pygame.time.Clock()
-	 
-	rx, ry = (0,0)
-	tx, ty = (0,0)
-	zpos = 5
-	rotate = move = False
-	
-	obj = InitGL()
-
-	while 1:
-		clock.tick(30)
-		for e in pygame.event.get():
-			if e.type == QUIT:
-				sys.exit()
-			elif e.type == KEYDOWN:
-				if e.key == K_ESCAPE:
-					sys.exit()
-				elif e.key in (K_LEFT, K_RIGHT):
-					print('Key rotation')
-					rotate = True
-					i, j = (2 if e.key == K_LEFT else -2, 0)
-			elif e.type == KEYUP:
-				if e.key in (K_LEFT, K_RIGHT):
-					rotate = False
-			elif e.type == MOUSEBUTTONDOWN:
-				if e.button == 4: zpos = max(1, zpos-1)
-				elif e.button == 5: zpos += 1
-				elif e.button == 1: rotate = True
-				elif e.button == 3: move = True
-			elif e.type == MOUSEBUTTONUP:
-				if e.button == 1: rotate = False
-				elif e.button == 3: move = False
-			elif e.type == MOUSEMOTION:
-				i, j = e.rel
-				if rotate:
-					rx += i
-					ry += j
-				if move:
-					tx += i
-					ty -= j
-
-		if rotate:
-			rx += i
-			ry += j
-
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-		glLoadIdentity()
-
-		# RENDER OBJECT
-		glTranslate(tx/20., ty/20., - zpos)
-		glRotate(ry, 1, 0, 0)
-		glRotate(rx, 0, 1, 0)
-		glCallList(obj.gl_list)
-
-		pygame.display.flip()
-
-
-
 class Avatar:
 
 	'''
@@ -318,7 +258,7 @@ class Avatar:
 		self.rot.x += self.ω.x * dt
 		self.rot.y += self.ω.y * dt
 		self.rot.z += self.ω.z * dt
-	
+
 
 	def render(self):
 
