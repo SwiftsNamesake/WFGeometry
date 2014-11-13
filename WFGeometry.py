@@ -10,7 +10,7 @@
 
 # TODO | - Context manager for glBegin/glEnd (with statement) (✓)
 #        - Event handlers (✓)
-#        - Matrix helper functions (stack?)
+#        - Matrix helper functions (stack?) (cf. numpy)
 #
 # SPEC | -
 #        -
@@ -31,6 +31,7 @@ from OpenGL.GLU import *
 # Import object loader
 from OBJFileLoader import *
 from collections import defaultdict, namedtuple
+from math import sin, cos, radians
 
 
 
@@ -217,6 +218,21 @@ def InitGL():
 
 
 
+class Point:
+	
+	#Point = namedtuple('Point', 'x y z')
+	# TODO: Extract Point definition (or find pre-existing)
+
+	def __init__(self, x=0, y=0, z=0):
+		self.x = x
+		self.y = y
+		self.z = z
+
+	def __str__(self):
+		return 'Point(x=%f, y=%f, z=%f)' % (self.x, self.y, self.z)
+
+
+
 class Avatar:
 
 	'''
@@ -224,9 +240,7 @@ class Avatar:
 
 	'''
 
-	Point = namedtuple('Point', 'x y z')
-
-	def __init__(self, x=0, y=0, z=0, rx=0, ry=0, rz=0, dx=0, dy=0, dz=0, drx=0, dry=0, drz=0):
+	def __init__(self, model, x=0, y=0, z=0, rx=0, ry=0, rz=0, dx=0, dy=0, dz=0, drx=0, dry=0, drz=0):
 		
 		'''
 		Docstring goes here
@@ -234,14 +248,18 @@ class Avatar:
 		'''
 
 		# TODO: Nomenclature (dx or vx, ω or dr, etc)
+		# TODO: Verify units
 
-		self.pos = Point(x, y, z)
-		self.rot = Point(rx, ry, rz)
+		self.pos = Point(x, y, z)		# Meters
+		self.rot = Point(rx, ry, rz)	# Degrees
 
-		self.v = Point(dx, dy, dz)
-		self.ω = Point(drx, dry, drz)
+		self.v = Point(dx, dy, dz)		# Meters per second
+		self.ω = Point(drx, dry, drz)	# Degrees per second
 
-		self.model = None
+		self.vf = 0 #  Forward velocity
+
+		self.model = model # Currently an OpenGL list
+		print(model)
 
 
 	def animate(self, dt):
@@ -259,8 +277,95 @@ class Avatar:
 		self.rot.y += self.ω.y * dt
 		self.rot.z += self.ω.z * dt
 
+		self.forward(self.vf) # Animate forwards
+
+		# print('Pos:', self.pos, 'Rot:', self.rot)
+		# print('v:', self.v, 'dR:', self.ω)
+
 
 	def render(self):
+
+		'''
+		Docstring goes here
+
+		'''
+
+		# Apply transformations (relative to modelview matrix)
+		glTranslate(self.pos.x/20.0, self.pos.y/20.0, self.pos.z/20.0 - 2.5) # TODO: Get rid of scaling
+		glRotate(self.rot.x, 1, 0, 0)
+		glRotate(self.rot.y, 0, 1, 0)
+		glRotate(self.rot.z, 0, 0, 1)
+
+		# Render
+		glCallList(self.model)
+		# print('Rendering')
+		
+		# Undo transformations
+		# glRotate(-self.rot.z, 0, 0, 1)
+		# glRotate(-self.rot.y, 0, 1, 0)
+		# glRotate(-self.rot.x, 1, 0, 0)
+		# glTranslate(-self.pos.x, -self.pos.y, -self.pos.z) # TODO: Get rid of scaling
+
+
+	def forward(self, v):
+		
+		'''
+		Docstring goes here
+
+		'''
+
+		# TODO: Tweak velocity
+		dx = sin(radians(self.rot.y))*v
+		dz = cos(radians(self.rot.y))*v
+
+		self.set(v=Point(x=dx, z=dz))
+
+
+	def set(self, **kwargs):
+		for key, val in kwargs.items():
+			# print('Setting %s to %s' % (key, val))
+			setattr(self, key, val)
+
+
+
+class MatrixStack:
+
+	'''
+	Docstring goes here
+
+	'''
+
+	def __init__(self, matrices=[]):
+		
+		'''
+		Docstring goes here
+
+		'''
+
+		self.stack = matrices
+
+
+	def apply(self):
+		
+		'''
+		Docstring goes here
+
+		'''
+
+		pass
+
+
+	def pop(self):
+
+		'''
+		Docstring goes here
+
+		'''
+
+		pass
+
+
+	def push(self):
 
 		'''
 		Docstring goes here
@@ -280,10 +385,10 @@ class Camera:
 	
 	def __init__(self):
 
-		self.rx, self.ry, self.rz 		= 0, 0,  0 # Rotation
-		self.tx, self.ty, self.tz 		= 0, 0, -5 # Translation
-		self.drx, self.dry, self.drz 	= 0, 0,  0 # Rotation delta
-		self.dtx, self.dty, self.dtz 	= 0, 0,  0 # Translation delta
+		self.rx, self.ry, self.rz 		= 0, 0,   0 # Rotation
+		self.tx, self.ty, self.tz 		= 0, 0, -55 # Translation
+		self.drx, self.dry, self.drz 	= 0, 5,   0 # Rotation delta
+		self.dtx, self.dty, self.dtz 	= 0, 0,   0 # Translation delta
 		
 		self.rotating 	 = False
 		self.translating = False
@@ -341,11 +446,13 @@ def bindEvents():
 	obj = InitGL()
 	dispatcher = EventDispatcher()
 	camera = Camera()
-
+	avatar = Avatar(obj.gl_list)
 
 	def doAlways(event):
 
-		camera.animate()
+		# TODO: Keep FPS in check
+
+		# camera.animate()
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 		glLoadIdentity()
@@ -370,25 +477,65 @@ def bindEvents():
 		pygame.display.flip()
 
 
-	dispatcher.bind({'type': KEYDOWN, 'key': K_LEFT}, 	lambda event: camera.set(dry=5, rotating=True))
-	dispatcher.bind({'type': KEYDOWN, 'key': K_RIGHT}, 	lambda event: camera.set(dry=-5, rotating=True))
-	dispatcher.bind({'type': KEYUP, 'key': K_LEFT}, 	lambda event: camera.setRotating(False))
-	dispatcher.bind({'type': KEYUP, 'key': K_RIGHT}, 	lambda event: camera.setRotating(False))
+	def AvatarMain(event):
 
-	dispatcher.bind({'type': KEYDOWN, 'key': K_UP}, 	lambda event: camera.set(dtz=-4, translating=True))
-	dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, 	lambda event: camera.set(dtz=4, translating=True))
-	dispatcher.bind({'type': KEYUP, 'key': K_UP}, 		lambda event: camera.setTranslating(False))
-	dispatcher.bind({'type': KEYUP, 'key': K_DOWN}, 	lambda event: camera.setTranslating(False))
+		'''
+		Executes on each iteration of the event loop.
+		Test code for the Avatar class
 
-	dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 1}, lambda event: camera.set(drz=-4, rotating=True))
-	dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 3}, lambda event: camera.set(drz=4, rotating=True))
-	dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 1}, 	lambda event: camera.setRotating(False))
-	dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 3}, 	lambda event: camera.setRotating(False))
+		'''
 
-	dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 4}, lambda event: camera.setTranslation(z=camera.tz+1.2))
-	dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 5}, lambda event: camera.setTranslation(z=camera.tz-1.2))
+		print('Pos: ', avatar.pos)
 
-	dispatcher.always = doAlways
+		camera.animate()
+		avatar.animate(1.0) # TODO: Determine dt
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+		glLoadIdentity()
+
+		avatar.render()
+
+		pygame.display.flip()
+
+
+	def bindAvatarEvents():
+
+		dispatcher.bind({'type': KEYDOWN, 'key': K_LEFT}, 	lambda event: avatar.set(ω=Point(y=5)))
+		dispatcher.bind({'type': KEYDOWN, 'key': K_RIGHT}, 	lambda event: avatar.set(ω=Point(y=-5)))
+		dispatcher.bind({'type': KEYUP, 'key': K_LEFT}, 	lambda event: avatar.set(ω=Point(y=0)))
+		dispatcher.bind({'type': KEYUP, 'key': K_RIGHT}, 	lambda event: avatar.set(ω=Point(y=0)))
+
+		# dispatcher.bind({'type': KEYDOWN, 'key': K_UP}, 	lambda event: avatar.set(v=Point(z=-3)))
+		# dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, 	lambda event: avatar.set(v=Point(z= 3)))
+		dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, 	lambda event: avatar.set(vf=-1))
+		dispatcher.bind({'type': KEYDOWN, 'key': K_UP}, 	lambda event: avatar.set(vf= 1))
+		dispatcher.bind({'type': KEYUP, 'key': K_DOWN}, 	lambda event: avatar.set(vf= 0))
+		dispatcher.bind({'type': KEYUP, 'key': K_UP}, 		lambda event: avatar.set(vf= 0))
+
+
+	def bindEvents():
+
+		dispatcher.bind({'type': KEYDOWN, 'key': K_LEFT}, 	lambda event: camera.set(dry=5, rotating=True))
+		dispatcher.bind({'type': KEYDOWN, 'key': K_RIGHT}, 	lambda event: camera.set(dry=-5, rotating=True))
+		dispatcher.bind({'type': KEYUP, 'key': K_LEFT}, 	lambda event: camera.setRotating(False))
+		dispatcher.bind({'type': KEYUP, 'key': K_RIGHT}, 	lambda event: camera.setRotating(False))
+
+		dispatcher.bind({'type': KEYDOWN, 'key': K_UP}, 	lambda event: camera.set(dtz=-4, translating=True))
+		dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, 	lambda event: camera.set(dtz=4, translating=True))
+		dispatcher.bind({'type': KEYUP, 'key': K_UP}, 		lambda event: camera.setTranslating(False))
+		dispatcher.bind({'type': KEYUP, 'key': K_DOWN}, 	lambda event: camera.setTranslating(False))
+
+		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 1}, lambda event: camera.set(drz=-4, rotating=True))
+		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 3}, lambda event: camera.set(drz=4, rotating=True))
+		dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 1}, 	lambda event: camera.setRotating(False))
+		dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 3}, 	lambda event: camera.setRotating(False))
+
+		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 4}, lambda event: camera.setTranslation(z=camera.tz+1.2))
+		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 5}, lambda event: camera.setTranslation(z=camera.tz-1.2))
+
+	dispatcher.always = [doAlways, AvatarMain][1]
+	bindAvatarEvents()
+	# bindEvents()
 
 	return dispatcher
 

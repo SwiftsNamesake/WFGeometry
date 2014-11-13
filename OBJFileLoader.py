@@ -25,6 +25,13 @@ from contextlib import contextmanager
 from os.path import abspath, join, dirname, normpath
 
 
+debug = False
+
+def DEBUG(*messages):
+	if debug:
+		DEBUG(*messages)
+
+
 @contextmanager
 def glDraw(mode):
 
@@ -73,7 +80,7 @@ def MTL(filename):
 			image = pygame.image.tostring(surf, 'RGBA', True)
 			ix, iy = surf.get_rect().size
 			texid = mtl['texture_Kd'] = glGenTextures(1)
-			print('texid', texid)
+			DEBUG('texid', texid)
 			glBindTexture(GL_TEXTURE_2D, texid)
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
@@ -120,7 +127,7 @@ class OBJ:
 			if not values:
 				continue
 
-			# print(values)
+			# DEBUG(values)
 
 			if values[0] == 'v':
 				v = [float(v) for v in values[1:4]] #map(float, values[1:4])
@@ -137,9 +144,9 @@ class OBJ:
 				self.texcoords.append([float(v) for v in values[1:3]])
 			elif values[0] in ('usemtl', 'usemat'):
 				material = values[1]
-				print(material)
+				DEBUG(material)
 			elif values[0] == 'mtllib':
-				print('Values:', values)
+				DEBUG('Values:', values)
 				self.mtl = MTL(join(self.path, normpath(values[1]))) # TODO | Fix relative path bug (✓)
 			elif values[0] == 'f':
 				face = []
