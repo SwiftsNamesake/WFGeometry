@@ -122,9 +122,6 @@ class OBJ:
 
 			# print(values)
 
-			if 'roof1' in values:
-				print('Hurrah\a')
-
 			if values[0] == 'v':
 				v = [float(v) for v in values[1:4]] #map(float, values[1:4])
 				if swapyz:
