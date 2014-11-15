@@ -114,7 +114,7 @@ class OBJ:
 		material = None
 
 		self.path = dirname(abspath(filename))
-
+		print(filename)
 		for line in open(filename, 'r'):
 
 			# Skip comments
@@ -175,7 +175,7 @@ class OBJ:
  
 			mtl = self.mtl[material]
 
-			if 'texture_Kd' in mtl:
+			if 'texture_Kd' in mtl: # TODO: Possible cause of the texture-bug (?)
 				# Use diffuse texmap
 				glBindTexture(GL_TEXTURE_2D, mtl['texture_Kd'])
 			else:

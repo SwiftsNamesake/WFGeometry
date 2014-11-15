@@ -11,6 +11,9 @@
 # TODO | - Context manager for glBegin/glEnd (with statement) (✓)
 #        - Event handlers (✓)
 #        - Matrix helper functions (stack?) (cf. numpy)
+#        - Platformer, loading maps, triggers
+#        - 3D Widgets
+#
 #
 # SPEC | -
 #        -
@@ -30,8 +33,13 @@ from OpenGL.GLU import *
 
 # Import object loader
 from OBJFileLoader import *
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from math import sin, cos, radians
+
+
+from EventDispatcher import EventDispatcher
+from Camera import Camera
+from Utilities import Point, Rect
 
 
 
@@ -44,140 +52,6 @@ def main():
 
 	dispatcher = bindEvents()
 	dispatcher.mainloop()
-
-
-
-class EventDispatcher:
-
-	'''
-	Introduces dynamic event binding to Pygame.
-
-	Add, replace and query event handlers
-
-	'''
-
-	# TODO: Normalize event data (?)
-	# TODO: Event aliases, tkinter-style event definitions (?)
-	# eg. type=KEYDOWN key=LEFT
-	# TODO: Hierachies of events, multiple handlers, replace or add
-	# TODO: Pattern or Event class implementing aliases, comparisons, etc.
-	# TODO: Queries
-	# TODO: Composite events, control keys (eg. Ctrl+Alt+A, Mousemotion+Left mouse button)
-	# TODO: Nested dicts or objects (?)
-	# TODO: Handle polling as well (?)
-	# TODO: Annotations, error handling
-
-	def __init__(self):
-		
-		'''
-		Docstring goes here
-
-		'''
-
-		# TODO: Is this the optimal data structure (w.r.t RAM and CPU)
-		# TODO: Allow multiple handlers per pattern
-		self.handlers 	= defaultdict(lambda: defaultdict(list)) # Maps event types to patterns and their respective handlers
-		self.always 	= lambda event: None # Runs on each iteration of the main loop (configurable)
-		self.debug 		= False
-
-		self.keys = defaultdict(bool) # TODO: Use class with default __getattr__ instead (?)
-
-
-	def DEBUG(self, *messages):
-
-		'''
-		Docstring goes here
-
-		'''
-
-		if self.debug: print(*messages)
-
-
-	def setKey(self, event):
-
-		'''
-		Updates internal key state dictionary
-
-		'''
-
-		# TODO: Implement
-		# TODO: Rename (?)
-
-		self.keys[0] = event.type in (MOUSEBUTTONDOWN, KEYUP)
-
-
-	def handle(self, event):
-		
-		'''
-		Dispatches an event to all matching event handlers.
-
-		'''
-
-		for handler in self.query(event): #getattr(self, event.type)
-			handler(event)
-			self.DEBUG('Invalid handler type')
-
-
-	def query(self, event):
-
-		'''
-		Retrieves all event handlers whose pattern
-		matches that of the incoming event (cf. bind for details).
-
-		'''
-
-		# TODO: Use issubset for comparisons
-		# TODO: Determine and - if necessary - improve performance
-		# TODO: Complete overview of event types and related data
-		match = frozenset((attr, getattr(event, attr)) for attr in ['type', 'key', 'button', 'rel'] if hasattr(event, attr))
-		self.DEBUG(match)
-
-		# TODO: Optionally return mapping between matching patterns and their corresponding handlers (?)
-		return (handler for pattern, handlers in self.handlers[event.type].items() for handler in handlers if pattern.issubset(match))
-
-
-	def bind(self, pattern, handler, replace=False):
-
-		'''
-		Binds a handler to an event pattern, optionally
-		replacing any pre-existing handlers.
-
-		A pattern is defined as a set of properties which an event must have
-		to be considered a match (eg. event.type is KEYDOWN and event.key is K_LEFT)
-		
-
-		Returns an ID associated with the particular handler.
-
-		'''
-
-		# TODO: Implement replace option
-		# TODO: Use issubset for comparisons
-		# TDOO: Should the type property be mandatory (?)
-
-		key = frozenset(pattern.items())
-		self.DEBUG('Bound pattern:', key)
-		self.handlers[pattern['type']][key].append(handler)
-		return hash(key), id(handler)
-
-
-	def mainloop(self):
-		
-		'''
-		Docstring goes here
-
-		'''
-
-		self.clock = pygame.time.Clock()
-		self.bind({'type': QUIT}, sys.exit)
-		self.bind({'type': KEYDOWN, 'key': K_ESCAPE}, sys.exit)
-
-		while True:
-			self.clock.tick(30)
-			for event in pygame.event.get():
-				self.DEBUG(event)
-				self.setKey(event)
-				self.handle(event)
-			self.always(event)
 
 
 
@@ -216,20 +90,6 @@ def InitGL():
 
 	return obj
 
-
-
-class Point:
-	
-	#Point = namedtuple('Point', 'x y z')
-	# TODO: Extract Point definition (or find pre-existing)
-
-	def __init__(self, x=0, y=0, z=0):
-		self.x = x
-		self.y = y
-		self.z = z
-
-	def __str__(self):
-		return 'Point(x=%f, y=%f, z=%f)' % (self.x, self.y, self.z)
 
 
 
@@ -298,13 +158,12 @@ class Avatar:
 
 		# Render
 		glCallList(self.model)
-		# print('Rendering')
-		
+
 		# Undo transformations
-		# glRotate(-self.rot.z, 0, 0, 1)
-		# glRotate(-self.rot.y, 0, 1, 0)
-		# glRotate(-self.rot.x, 1, 0, 0)
-		# glTranslate(-self.pos.x, -self.pos.y, -self.pos.z) # TODO: Get rid of scaling
+		glRotate(-self.rot.z, 0, 0, 1)
+		glRotate(-self.rot.y, 0, 1, 0)
+		glRotate(-self.rot.x, 1, 0, 0)
+		glTranslate(-self.pos.x, -self.pos.y, -self.pos.z) # TODO: Get rid of scaling
 
 
 	def forward(self, v):
@@ -328,111 +187,123 @@ class Avatar:
 
 
 
-class MatrixStack:
-
+def createGrid():
+	
 	'''
 	Docstring goes here
 
 	'''
 
-	def __init__(self, matrices=[]):
-		
-		'''
-		Docstring goes here
+	# TODO: Add options (eg. spacing, colours, origin)
 
-		'''
+	grid = glGenLists(1)
+	glNewList(grid, GL_COMPILE)
 
-		self.stack = matrices
+	# X-axis
+	glBegin(GL_LINES)
+	glColor(1.0, 0.0, 0.0, 1.0)
+	glVertex(-200.0, 0.0, 0.0)
+	glVertex( 200.0, 0.0, 0.0)
+	glEnd()
+
+	glBegin(GL_TRIANGLE_STRIP)
+	glColor(1.0, 0.0, 0.0, 0.5)
+	glVertex(-5.0, 0.0, -5.0)
+	glVertex(-5.0, 0.0,  5.0)
+	glVertex( 5.0, 0.0, -5.0)
+	glVertex( 5.0, 0.0,  5.0)
+	glEnd()
+
+	# Y-axis
+	glBegin(GL_LINES)
+	glColor(0.0, 0.0, 1.0, 1.0)
+	glVertex(0.0, -200.0, 0.0)
+	glVertex(0.0,  200.0, 0.0)
+	glEnd()
+
+	glBegin(GL_TRIANGLE_STRIP)
+	glColor(0.0, 1.0, 0.0, 0.5)
+	glVertex(0.0, -5.0, -5.0)
+	glVertex(0.0, -5.0,  5.0)
+	glVertex(0.0,  5.0, -5.0)
+	glVertex(0.0,  5.0,  5.0)
+	glEnd()
+
+	# Z-axis
+	glBegin(GL_LINES)
+	glColor(0.0, 1.0, 0.0, 1.0)
+	glVertex(0.0, 0.0, -200.0)
+	glVertex(0.0, 0.0,  200.0)
+	glEnd()
+
+	glBegin(GL_TRIANGLE_STRIP)
+	glColor(0.0, 0.0, 1.0, 0.5)
+	glVertex(-5.0, -5.0, 0.0)
+	glVertex(-5.0,  5.0, 0.0)
+	glVertex( 5.0, -5.0, 0.0)
+	glVertex( 5.0,  5.0, 0.0)
+	glEnd()
+
+	glEndList()
+
+	print(grid)
+
+	return grid
 
 
-	def apply(self):
-		
-		'''
-		Docstring goes here
 
-		'''
-
-		pass
-
-
-	def pop(self):
-
-		'''
-		Docstring goes here
-
-		'''
-
-		pass
-
-
-	def push(self):
-
-		'''
-		Docstring goes here
-
-		'''
-
-		pass
-
-
-
-class Camera:
+class Widget:
 
 	'''
-	Animation data
-	
+	OpenGL widgets
+
 	'''
-	
-	def __init__(self):
 
-		self.rx, self.ry, self.rz 		= 0, 0,   0 # Rotation
-		self.tx, self.ty, self.tz 		= 0, 0, -55 # Translation
-		self.drx, self.dry, self.drz 	= 0, 5,   0 # Rotation delta
-		self.dtx, self.dty, self.dtz 	= 0, 0,   0 # Translation delta
+	def __init__(self, box, command):
 		
-		self.rotating 	 = False
-		self.translating = False
+		'''
+		Docstring goes here
+
+		'''
+
+		self.box = box
+		self.command = command
+		self.pressed = False # self.state
+
+		self.vPressed 	= OBJ('data/buttonP.obj')
+		self.vReleased 	= OBJ('data/buttonR.obj')
+		self.active = self.vPressed if self.pressed else self.vReleased
 
 
-	def set(self, **kwargs):
-		for key, val in kwargs.items():
-			setattr(self, key, val)
+	def pressIf(self, x, y):
+		if self.box.within(x, y):
+			self.press()
 
 
-	def rotate(self, x=0, y=0, z=0):
-		self.set(drx=x, dry=y, drz=z, rotating=True)
+	def press(self):
+		self.pressed = True
+		self.active = self.vPressed
+		self.command() # TODO: Generate event instead (?)
 
 
-	def setRotation(self, x=0, y=0, z=0):
-		self.set(rx=x, ry=y, rz=z)
+	def release(self):
+		self.pressed = True
+		self.active = self.vReleased
 
 
-	def setTranslation(self, x=0, y=0, z=0):
-		self.set(tx=x, ty=y, tz=z)
+	def render(self):
 
-
-	def translate(self, x=0, y=0, z=0):
-		self.set(dtx=x, dty=y, dtz=z, translating=True)
-
-
-	def setRotating(self, rotating):
-		self.set(rotating=rotating)
-
-
-	def setTranslating(self, translating):
-		self.set(translating=translating)
-
-
-	def animate(self):
-		if self.rotating:
-			self.rx += self.drx
-			self.ry += self.dry
-			self.rz += self.drz
-
-		if self.translating:
-			self.tx += self.dtx
-			self.ty += self.dty
-			self.tz += self.dtz
+		width, height = (int(720*2), int(480*2)) # TODO: Make more robust
+		
+		sx = self.box.width()*1/width
+		sy = self.box.height()*1/height
+		
+		# print(self.box.width(), self.box.height())
+		
+		glLoadIdentity() # Don't apply camera transformations
+		glScale(sx, sy, sx)
+		glTranslate(-1.5/(sx), 1.0/sy, -1.1/sx)
+		glCallList(self.active.gl_list)
 
 
 
@@ -443,17 +314,20 @@ def bindEvents():
 
 	'''
 
-	obj = InitGL()
-	dispatcher = EventDispatcher()
-	camera = Camera()
-	avatar = Avatar(obj.gl_list)
+	obj 		= InitGL()
+	dispatcher 	= EventDispatcher()
+	camera 		= Camera()
+	avatar 		= Avatar(obj.gl_list)
+	grid 		= createGrid()
+
+	button = Widget(Rect(10, 10, 150, 80), lambda: print('Camera | rot x={rx} y={ry} z={rz} | pos x={tx} y={ty} z={tz}'.format(**camera.__dict__)))
 
 	def doAlways(event):
 
 		# TODO: Keep FPS in check
 
 		# camera.animate()
-
+	
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 		glLoadIdentity()
 
@@ -485,20 +359,39 @@ def bindEvents():
 
 		'''
 
-		print('Pos: ', avatar.pos)
+		# print('Pos: ', avatar.pos)
+
+		glEnable (GL_BLEND);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		camera.animate()
 		avatar.animate(1.0) # TODO: Determine dt
 
+		glEnable(GL_BLEND)
+		glAlphaFunc(GL_GREATER, 0.5)
+		# glBlendFunc(GL_DST_ALPHA, GL_ONE)
+
+		glClearColor(0.4, 0.4, 0.9, 1.0)
+
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 		glLoadIdentity()
+		camera.apply()
 
+		glCallList(grid)
 		avatar.render()
+
+		# Draw widget
+		button.render()
 
 		pygame.display.flip()
 
 
 	def bindAvatarEvents():
+
+		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 1}, lambda event: button.pressIf(*event.pos))
+		dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 1}, lambda event: button.release())
+
+		dispatcher.bind({'type': MOUSEMOTION}, lambda event: camera.set(ry=camera.ry+event.rel[0], rx=camera.rx+event.rel[1]))
 
 		dispatcher.bind({'type': KEYDOWN, 'key': K_LEFT}, 	lambda event: avatar.set(ω=Point(y=5)))
 		dispatcher.bind({'type': KEYDOWN, 'key': K_RIGHT}, 	lambda event: avatar.set(ω=Point(y=-5)))
@@ -507,35 +400,43 @@ def bindEvents():
 
 		# dispatcher.bind({'type': KEYDOWN, 'key': K_UP}, 	lambda event: avatar.set(v=Point(z=-3)))
 		# dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, 	lambda event: avatar.set(v=Point(z= 3)))
+		dispatcher.bind({'type': KEYDOWN, 'key': K_UP, 'mod': 0}, lambda event: avatar.set(vf= 1))
+		dispatcher.bind({'type': KEYDOWN, 'key': K_UP, 'mod': 2}, lambda event: avatar.set(vf= 2))
 		dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, 	lambda event: avatar.set(vf=-1))
-		dispatcher.bind({'type': KEYDOWN, 'key': K_UP}, 	lambda event: avatar.set(vf= 1))
-		dispatcher.bind({'type': KEYUP, 'key': K_DOWN}, 	lambda event: avatar.set(vf= 0))
 		dispatcher.bind({'type': KEYUP, 'key': K_UP}, 		lambda event: avatar.set(vf= 0))
+		dispatcher.bind({'type': KEYUP, 'key': K_DOWN}, 	lambda event: avatar.set(vf= 0))
+
+		# dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, 	lambda event: avatar.set(vf=-1))
+		# dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, 	lambda event: avatar.set(vf=-1))
+		# dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, 	lambda event: avatar.set(vf=-1))
 
 
 	def bindEvents():
 
-		dispatcher.bind({'type': KEYDOWN, 'key': K_LEFT}, 	lambda event: camera.set(dry=5, rotating=True))
-		dispatcher.bind({'type': KEYDOWN, 'key': K_RIGHT}, 	lambda event: camera.set(dry=-5, rotating=True))
-		dispatcher.bind({'type': KEYUP, 'key': K_LEFT}, 	lambda event: camera.setRotating(False))
-		dispatcher.bind({'type': KEYUP, 'key': K_RIGHT}, 	lambda event: camera.setRotating(False))
+		# NOTE: K_w is not the scancode for 'w'
+		w, a, s, d = 17, 30, 31, 32
 
-		dispatcher.bind({'type': KEYDOWN, 'key': K_UP}, 	lambda event: camera.set(dtz=-4, translating=True))
-		dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, 	lambda event: camera.set(dtz=4, translating=True))
-		dispatcher.bind({'type': KEYUP, 'key': K_UP}, 		lambda event: camera.setTranslating(False))
-		dispatcher.bind({'type': KEYUP, 'key': K_DOWN}, 	lambda event: camera.setTranslating(False))
+		dispatcher.bind({'type': KEYDOWN, 'unicode': 'w'}, 	lambda event: camera.set(dtz=-4, translating=True))
+		dispatcher.bind({'type': KEYDOWN, 'unicode': 'a'}, 	lambda event: camera.set(dry=5, rotating=True))
+		dispatcher.bind({'type': KEYDOWN, 'unicode': 's'}, 	lambda event: camera.set(dtz=4, translating=True))
+		dispatcher.bind({'type': KEYDOWN, 'unicode': 'd'}, 	lambda event: camera.set(dry=-5, rotating=True))
 
-		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 1}, lambda event: camera.set(drz=-4, rotating=True))
-		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 3}, lambda event: camera.set(drz=4, rotating=True))
-		dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 1}, 	lambda event: camera.setRotating(False))
-		dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 3}, 	lambda event: camera.setRotating(False))
+		dispatcher.bind({'type': KEYUP, 'scancode': w}, lambda event: camera.setTranslating(False))
+		dispatcher.bind({'type': KEYUP, 'scancode': a}, lambda event: camera.setRotating(False))
+		dispatcher.bind({'type': KEYUP, 'scancode': s}, lambda event: camera.setTranslating(False))
+		dispatcher.bind({'type': KEYUP, 'scancode': d}, lambda event: camera.setRotating(False))
+
+		# dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 1}, lambda event: camera.set(drz=-4, rotating=True))
+		# dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 3}, lambda event: camera.set(drz=4, rotating=True))
+		# dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 1}, 	lambda event: camera.setRotating(False))
+		# dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 3}, 	lambda event: camera.setRotating(False))
 
 		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 4}, lambda event: camera.setTranslation(z=camera.tz+1.2))
 		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 5}, lambda event: camera.setTranslation(z=camera.tz-1.2))
 
 	dispatcher.always = [doAlways, AvatarMain][1]
 	bindAvatarEvents()
-	# bindEvents()
+	bindEvents()
 
 	return dispatcher
 
