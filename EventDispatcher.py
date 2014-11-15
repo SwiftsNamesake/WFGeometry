@@ -41,6 +41,15 @@ class EventDispatcher:
 	# TODO: Handle polling as well (?)
 	# TODO: Annotations, error handling
 
+	class Pattern(object):
+
+		''' Docstring goes here '''
+
+		def __init__(self, attributes):
+			self.also = attributes.pop('also', tuple())
+			self.attributes = frozenset(attributes.items())
+
+
 	def __init__(self):
 		
 		'''
@@ -103,11 +112,34 @@ class EventDispatcher:
 		# TODO: Use issubset for comparisons
 		# TODO: Determine and - if necessary - improve performance
 		# TODO: Complete overview of event types and related data
-		match = frozenset((attr, getattr(event, attr)) for attr in ['type', 'key', 'button', 'rel', 'unicode', 'scancode', 'mod'] if hasattr(event, attr))
-		self.DEBUG(match)
 
 		# TODO: Optionally return mapping between matching patterns and their corresponding handlers (?)
-		return (handler for pattern, handlers in self.handlers[event.type].items() for handler in handlers if pattern.issubset(match))
+		return (handler for pattern, handlers in self.handlers[event.type].items() for handler in handlers if self.matches(pattern, event))
+
+
+	def matches(self, pattern, event):
+
+		'''
+		Verifies that a given pattern matches the event.
+
+		'''
+
+		# TODO: Catch match object creation
+		# TODO: Document meaning of pattern fields (eg. 'also', 'type', 'rel')
+
+		match = frozenset((attr, getattr(event, attr)) for attr in ['type', 'key', 'button', 'rel', 'unicode', 'scancode', 'mod'] if hasattr(event, attr))
+		# self.DEBUG(match)
+		# NOTE: all([]) is True
+		pressed = [pygame.key.get_pressed()[key] for key in pattern.also]
+		if event.type == MOUSEMOTION:
+			# print(pygame.key.get_pressed())
+			issub = pattern.attributes.issubset(match)
+			print(pattern.also)
+			print(all(pressed))
+			print(issub)
+			print()
+			return issub and all(pressed)
+		return pattern.attributes.issubset(match) and all(pressed)
 
 
 	def bind(self, pattern, handler, replace=False):
@@ -126,9 +158,13 @@ class EventDispatcher:
 
 		# TODO: Implement replace option
 		# TODO: Use issubset for comparisons
-		# TDOO: Should the type property be mandatory (?)
+		# TODO: Should the type property be mandatory (?)
+		# TODO: Proper handling of also property
 
-		key = frozenset(pattern.items())
+		# NOTE: The 'also' property is treated differently since
+		# it is independent from the current event
+		# key.also = also
+		key = EventDispatcher.Pattern(pattern)
 		self.DEBUG('Bound pattern:', key)
 		self.handlers[pattern['type']][key].append(handler)
 		return hash(key), id(handler)

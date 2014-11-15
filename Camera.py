@@ -15,9 +15,11 @@
 
 
 from OpenGL.GL import *
+from SwiftUtils import Console, addLogger
 
 
 
+@addLogger
 class Camera:
 
 	'''
@@ -34,6 +36,8 @@ class Camera:
 		
 		self.rotating 	 = False
 		self.translating = False
+
+		self.DEBUG = not True
 
 
 	def set(self, **kwargs):
@@ -79,6 +83,7 @@ class Camera:
 
 
 	def animate(self):
+		self.log('Animating camera')
 		if self.rotating:
 			self.rx += self.drx
 			self.ry += self.dry
@@ -89,4 +94,12 @@ class Camera:
 			self.ty += self.dty
 			self.tz += self.dtz
 
-		# print('Camera | rx %d, ry %d rz %d | tx %d ty %d tz %d' % (self.rx, self.ry, self.rz, self.tx, self.ty, self.tz))
+
+	def __str__(self):
+
+		'''
+		Docstring goes here
+
+		'''
+
+		return 'Camera | rot x={rx} y={ry} z={rz} | pos x={tx} y={ty} z={tz}'.format(rx=self.rx, ry=self.ry, rz=self.rz, tx=self.tx, ty=self.ty, tz=self.tz)

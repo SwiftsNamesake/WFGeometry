@@ -13,6 +13,7 @@
 #          parent directory of the OBJ file itself (✓)
 #        - Entities support (eg. 'g Mesh1 roof1 Model'), possibly by storing slice indices for each object
 #        - Units
+#        - Properties (textures, colours, sides, area, centre point)
 #
 # SPEC | -
 #        -

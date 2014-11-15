@@ -119,7 +119,6 @@ class Avatar:
 		self.vf = 0 #  Forward velocity
 
 		self.model = model # Currently an OpenGL list
-		print(model)
 
 
 	def animate(self, dt):
@@ -246,8 +245,6 @@ def createGrid():
 
 	glEndList()
 
-	print(grid)
-
 	return grid
 
 
@@ -315,12 +312,13 @@ def bindEvents():
 	'''
 
 	obj 		= InitGL()
-	dispatcher 	= EventDispatcher()
 	camera 		= Camera()
 	avatar 		= Avatar(obj.gl_list)
 	grid 		= createGrid()
+	dispatcher 	= EventDispatcher()
 
-	button = Widget(Rect(10, 10, 150, 80), lambda: print('Camera | rot x={rx} y={ry} z={rz} | pos x={tx} y={ty} z={tz}'.format(**camera.__dict__)))
+	button = Widget(Rect(10, 10, 150, 80), lambda: None)
+
 
 	def doAlways(event):
 
@@ -391,7 +389,7 @@ def bindEvents():
 		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 1}, lambda event: button.pressIf(*event.pos))
 		dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 1}, lambda event: button.release())
 
-		dispatcher.bind({'type': MOUSEMOTION}, lambda event: camera.set(ry=camera.ry+event.rel[0], rx=camera.rx+event.rel[1]))
+		dispatcher.bind({'type': MOUSEMOTION, 'also': (K_RSHIFT,)}, lambda event: camera.set(ry=camera.ry+event.rel[0], rx=camera.rx+event.rel[1]))
 
 		dispatcher.bind({'type': KEYDOWN, 'key': K_LEFT}, 	lambda event: avatar.set(ω=Point(y= 5)))
 		dispatcher.bind({'type': KEYDOWN, 'key': K_RIGHT}, 	lambda event: avatar.set(ω=Point(y=-5)))
