@@ -393,10 +393,10 @@ def bindEvents():
 
 		dispatcher.bind({'type': MOUSEMOTION}, lambda event: camera.set(ry=camera.ry+event.rel[0], rx=camera.rx+event.rel[1]))
 
-		dispatcher.bind({'type': KEYDOWN, 'key': K_LEFT}, 	lambda event: avatar.set(ω=Point(y=5)))
+		dispatcher.bind({'type': KEYDOWN, 'key': K_LEFT}, 	lambda event: avatar.set(ω=Point(y= 5)))
 		dispatcher.bind({'type': KEYDOWN, 'key': K_RIGHT}, 	lambda event: avatar.set(ω=Point(y=-5)))
-		dispatcher.bind({'type': KEYUP, 'key': K_LEFT}, 	lambda event: avatar.set(ω=Point(y=0)))
-		dispatcher.bind({'type': KEYUP, 'key': K_RIGHT}, 	lambda event: avatar.set(ω=Point(y=0)))
+		dispatcher.bind({'type': KEYUP, 'key': K_LEFT}, 	lambda event: avatar.set(ω=Point(y= 0)))
+		dispatcher.bind({'type': KEYUP, 'key': K_RIGHT}, 	lambda event: avatar.set(ω=Point(y= 0)))
 
 		# dispatcher.bind({'type': KEYDOWN, 'key': K_UP}, 	lambda event: avatar.set(v=Point(z=-3)))
 		# dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, 	lambda event: avatar.set(v=Point(z= 3)))
