@@ -37,7 +37,7 @@ from collections import namedtuple
 from math import sin, cos, radians
 
 
-from EventDispatcher import EventDispatcher
+from SwiftUtils.EventDispatcher import EventDispatcher
 from Camera import Camera
 from Utilities import Point, Rect
 
@@ -199,49 +199,43 @@ def createGrid():
 	glNewList(grid, GL_COMPILE)
 
 	# X-axis
-	glBegin(GL_LINES)
-	glColor(1.0, 0.0, 0.0, 1.0)
-	glVertex(-200.0, 0.0, 0.0)
-	glVertex( 200.0, 0.0, 0.0)
-	glEnd()
+	with glDraw(GL_LINES):
+		glColor(1.0, 0.0, 0.0, 1.0)
+		glVertex(-200.0, 0.0, 0.0)
+		glVertex( 200.0, 0.0, 0.0)
 
-	glBegin(GL_TRIANGLE_STRIP)
-	glColor(1.0, 0.0, 0.0, 0.5)
-	glVertex(-5.0, 0.0, -5.0)
-	glVertex(-5.0, 0.0,  5.0)
-	glVertex( 5.0, 0.0, -5.0)
-	glVertex( 5.0, 0.0,  5.0)
-	glEnd()
+	with glDraw(GL_TRIANGLE_STRIP):
+		glColor(1.0, 0.0, 0.0, 0.5)
+		glVertex(-5.0, 0.0, -5.0)
+		glVertex(-5.0, 0.0,  5.0)
+		glVertex( 5.0, 0.0, -5.0)
+		glVertex( 5.0, 0.0,  5.0)
 
 	# Y-axis
-	glBegin(GL_LINES)
-	glColor(0.0, 0.0, 1.0, 1.0)
-	glVertex(0.0, -200.0, 0.0)
-	glVertex(0.0,  200.0, 0.0)
-	glEnd()
+	with glDraw(GL_LINES):
+		glColor(0.0, 0.0, 1.0, 1.0)
+		glVertex(0.0, -200.0, 0.0)
+		glVertex(0.0,  200.0, 0.0)
 
-	glBegin(GL_TRIANGLE_STRIP)
-	glColor(0.0, 1.0, 0.0, 0.5)
-	glVertex(0.0, -5.0, -5.0)
-	glVertex(0.0, -5.0,  5.0)
-	glVertex(0.0,  5.0, -5.0)
-	glVertex(0.0,  5.0,  5.0)
-	glEnd()
+	with glDraw(GL_TRIANGLE_STRIP):
+		glColor(0.0, 1.0, 0.0, 0.5)
+		glVertex(0.0, -5.0, -5.0)
+		glVertex(0.0, -5.0,  5.0)
+		glVertex(0.0,  5.0, -5.0)
+		glVertex(0.0,  5.0,  5.0)
 
 	# Z-axis
-	glBegin(GL_LINES)
-	glColor(0.0, 1.0, 0.0, 1.0)
-	glVertex(0.0, 0.0, -200.0)
-	glVertex(0.0, 0.0,  200.0)
-	glEnd()
+	with glDraw(GL_LINES):
+		glColor(0.0, 1.0, 0.0, 1.0)
+		glVertex(0.0, 0.0, -200.0)
+		glVertex(0.0, 0.0,  200.0)
 
-	glBegin(GL_TRIANGLE_STRIP)
-	glColor(0.0, 0.0, 1.0, 0.5)
-	glVertex(-5.0, -5.0, 0.0)
-	glVertex(-5.0,  5.0, 0.0)
-	glVertex( 5.0, -5.0, 0.0)
-	glVertex( 5.0,  5.0, 0.0)
-	glEnd()
+	with glDraw(GL_TRIANGLE_STRIP):
+		glColor(0.0, 0.0, 1.0, 0.5)
+		glVertex(-5.0, -5.0, 0.0)
+		glVertex(-5.0,  5.0, 0.0)
+		glVertex( 5.0, -5.0, 0.0)
+		glVertex( 5.0,  5.0, 0.0)
 
 	glEndList()
 

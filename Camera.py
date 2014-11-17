@@ -37,7 +37,7 @@ class Camera:
 		self.rotating 	 = False
 		self.translating = False
 
-		self.DEBUG = not True
+		self.DEBUG = False
 
 
 	def set(self, **kwargs):
@@ -83,7 +83,7 @@ class Camera:
 
 
 	def animate(self):
-		self.log('Animating camera')
+
 		if self.rotating:
 			self.rx += self.drx
 			self.ry += self.dry
