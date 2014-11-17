@@ -31,11 +31,10 @@ from pygame.constants import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-# Import object loader
-from OBJFileLoader import *
-from collections import namedtuple
-from math import sin, cos, radians
-
+from OBJFileLoader import * 		# Object loader
+from collections import namedtuple	#
+from math import sin, cos, radians	#
+from random import choice
 
 from SwiftUtils.EventDispatcher import EventDispatcher
 from Camera import Camera
@@ -79,7 +78,7 @@ def InitGL():
 	 
 	# Load object after pygame init
 	# obj = OBJ(sys.argv[1], swapyz=True)
-	obj = OBJ(['data/villa#2.obj', 'data/square.obj', 'data/cube.obj', 'data/hombre#2.obj'][3], swapyz=False)
+	models = [OBJ(fn, swapyz=False) for fn in ('data/villa#2.obj', 'data/square.obj', 'data/cube.obj', 'data/hombre#2.obj')[-2:]]
 
 	glMatrixMode(GL_PROJECTION)
 	glLoadIdentity()
@@ -88,7 +87,7 @@ def InitGL():
 	glEnable(GL_DEPTH_TEST)
 	glMatrixMode(GL_MODELVIEW)
 
-	return obj
+	return models
 
 
 
@@ -118,6 +117,7 @@ class Avatar:
 
 		self.vf = 0 #  Forward velocity
 
+		print('Avatar model:', model)
 		self.model = model # Currently an OpenGL list
 
 
@@ -305,42 +305,13 @@ def bindEvents():
 
 	'''
 
-	obj 		= InitGL()
+	models 		= InitGL()
 	camera 		= Camera()
-	avatar 		= Avatar(obj.gl_list)
+	avatar 		= Avatar(choice(models).gl_list)
 	grid 		= createGrid()
 	dispatcher 	= EventDispatcher()
 
 	button = Widget(Rect(10, 10, 150, 80), lambda: None)
-
-
-	def doAlways(event):
-
-		# TODO: Keep FPS in check
-
-		# camera.animate()
-	
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-		glLoadIdentity()
-
-		# Render object
-		glTranslate(camera.tx/20.0, camera.ty/20.0, camera.tz/20.0)
-		glRotate(camera.rx, 1, 0, 0)
-		glRotate(camera.ry, 0, 1, 0)
-		glRotate(camera.rz, 0, 0, 1)
-		glCallList(obj.gl_list)
-
-		if False:
-			glTranslate(1.2, 0.0, 0.0)
-			glRotate(-27, 0, 0, 1)
-			glCallList(obj.gl_list)
-			glRotate(27, 0, 0, 1)
-			glTranslate(-1.2, 1.8, 0.0)
-			glCallList(obj.gl_list)
-			glTranslate(0.0, -2*1.8, 0.0)
-			glCallList(obj.gl_list)
-
-		pygame.display.flip()
 
 
 	def AvatarMain(event):
@@ -352,6 +323,7 @@ def bindEvents():
 		'''
 
 		# print('Pos: ', avatar.pos)
+		# TODO: Keep FPS in check
 
 		glEnable (GL_BLEND);
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -361,7 +333,6 @@ def bindEvents():
 
 		glEnable(GL_BLEND)
 		glAlphaFunc(GL_GREATER, 0.5)
-		# glBlendFunc(GL_DST_ALPHA, GL_ONE)
 
 		glClearColor(0.4, 0.4, 0.9, 1.0)
 
@@ -426,7 +397,7 @@ def bindEvents():
 		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 4}, lambda event: camera.setTranslation(z=camera.tz+1.2))
 		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 5}, lambda event: camera.setTranslation(z=camera.tz-1.2))
 
-	dispatcher.always = [doAlways, AvatarMain][1]
+	dispatcher.always = AvatarMain
 	bindAvatarEvents()
 	bindEvents()
 
