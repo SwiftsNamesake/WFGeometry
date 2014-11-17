@@ -8,9 +8,34 @@
 
 # TODO | - Define API
 #        - 3D vectors
+#        - Handle units
+#        - Splines, bezier curves (advanced, low priority)
+#        - Pre-existing parsing modules
 #
 # SPEC | - Exports a Model class and parsers for Wavefront MTL and OBJ files
 #        -
+
+
+
+def parseMTL(filename):
+
+	'''
+	Parses an MTL file
+
+	'''
+
+	raise NotImplementedError
+
+
+
+def parseOBJ(filename):
+
+	'''
+	Parses an OBJ file
+
+	'''
+
+	raise NotImplementedError
 
 
 
