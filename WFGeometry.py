@@ -78,7 +78,7 @@ def InitGL():
 	 
 	# Load object after pygame init
 	# obj = OBJ(sys.argv[1], swapyz=True)
-	models = [OBJ(fn, swapyz=False) for fn in ('data/villa#2.obj', 'data/square.obj', 'data/cube.obj', 'data/hombre#2.obj')[-2:]]
+	models = [OBJ(fn, swapyz=False) for fn in ('data/villa#2.obj', 'data/square.obj', 'data/cube.obj', 'data/hombre#2.obj')[-1:]]
 
 	glMatrixMode(GL_PROJECTION)
 	glLoadIdentity()

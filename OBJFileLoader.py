@@ -179,7 +179,7 @@ class OBJ:
  
 			glBegin(GL_POLYGON)
 
-			for i in range(len(vertices)):
+			for i, v in enumerate(vertices):
 				if normals[i] > 0:
 					glNormal3fv(self.normals[normals[i] - 1])
 				if texture_coords[i] > 0:
