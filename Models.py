@@ -23,7 +23,7 @@
 from os.path import abspath, join, dirname, normpath 	# ...
 from pygame import image 								# ...
 from OpenGL.GL import *									# ...
-from collections import defaultdict 					# ...
+from collections import defaultdict, OrderedDict 		# ...
 # from itertools
 
 
@@ -108,11 +108,14 @@ def parseOBJ(filename):
 	'''
 
 	# TODO: Use namedtuple to pack face data (?)
+	# TODO: Difference between groups and objects (?)
+	# TODO: Handle multiple groups properly (eg. g group1 group2 group3)
 
 	raise NotImplementedError('Walk along. Nothing to see here.')
 
 	data 	= defaultdict(list)	#
 	path 	= parent(filename) 	# Path to containing folder
+
 
 
 	for line in filter(lambda ln: not (ln.isspace() or ln.startswith('#')), open(filename, 'r')):
@@ -139,7 +142,11 @@ def parseOBJ(filename):
 
 		elif values[0] == 'g':
 			# Group
-			pass
+			# Stores lower and upper bounds (indices) of faces that belong to each group
+			# We use an OrderedDict to store the groups since the beginning of a new group
+			# determines the upper bound of the previous one.
+			data['groups'] = data.get('groups', OrderedDict()) # TODO: Fix extraneous object creation (this is were lazy evaluation comes in handy... Oh well.)
+			data['groups'].append()
 
 		elif values[0] == 'o':
 			# Object
@@ -150,18 +157,32 @@ def parseOBJ(filename):
 			pass
 
 		elif values[0] == 'mtllib':
-			#
+			# MTL library
+			# Load materials defined in an external file
 			data['mtl'] = parseMTL(join(path, values[1]))
 
 		elif values[0] == 'usemtl':
-			# Select material
+			# Use MTL material
 			data['material'] = data['mtl'][values[1]] # Current material
-			
+
 		else:
 			# Unknown parameter encountered
 			raise ValueError('\'{0}\' is not a recognised parameter.'.format(values[0]))
 
 	return data
+
+
+
+def createBuffers(filename, groups=True):
+	
+	'''
+	Creates OpenGL buffers (one per group unless groups are disabled)
+
+	'''
+
+	# TODO: Look into all non-deprecated glEnable arguments, make sure they're handled properly
+
+	raise NotImplementedError('Leave me alone. I\'m not ready yet')
 
 
 
