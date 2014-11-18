@@ -20,6 +20,8 @@
 from os.path import abspath, join, dirname, normpath 	# ...
 from pygame import image 								# ...
 from OpenGL.GL import *									# ...
+from collections import defaultdict 					# ...
+# from itertools
 
 
 
@@ -52,9 +54,14 @@ def parseMTL(filename):
 
 	'''
 
-	materials = {}
+	raise NotImplementedError('Walk along. Nothing to see here.')
 
-	raise NotImplementedError
+	materials = {} # TODO: Dict comprehension, itertools, split on "newmtl" (?)
+
+	for line in filter(lambda ln: not (ln.isspace() or ln.startswith('#')), open(filename, 'r')):
+		
+		# For each line that is not blank or a comment
+		values = line.split() # Split on space
 
 
 
@@ -65,8 +72,39 @@ def parseOBJ(filename):
 
 	'''
 
-	raise NotImplementedError
+	raise NotImplementedError('Walk along. Nothing to see here.')
 
+	model 	= [] 				# Buffer 
+	data 	= defaultdict(list)	#
+
+	for line in filter(lambda ln: not (ln.isspace() or ln.startswith('#')), open(filename, 'r')):
+
+		if values[0] == 'v':
+			# Vertex coordinates
+			data['vertices'].append([float(v) for v in values[1:4]]) # TODO: Handle invalid vertex data
+		elif values[0] == 'vn':
+			# Vertex normal
+			data['normals'].append([float(v) for v in values[1:4]]) # TODO: Handle invalid normal data
+		elif values[0] == 'vt':
+			# Texture coordinates
+			data['textures'].append([float(t) for t in values[1:3]]) # TODO: Handle invalid texture data
+		elif values[0] == 'f':
+			# Face
+			pass
+		elif values[0] == 'g':
+			# Group
+			pass
+		elif values[0] == 'o':
+			# Object
+			pass
+		elif values[0] == 's':
+			# Smooth shading
+			pass
+		elif values[0] = 'mtllib':
+			#
+			pass
+
+	return model
 
 
 class Model(object):
@@ -104,7 +142,7 @@ def main():
 
 	'''
 
-	pass
+	obj = parseOBJ('...')
 
 
 

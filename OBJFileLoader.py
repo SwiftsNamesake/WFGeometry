@@ -60,9 +60,7 @@ def MTL(filename):
 	mtl 	 	= None							# 
 	path 		= dirname(abspath(filename)) 	# 
 	
-	lines = (line for line in open(filename, 'r') if not (line.isspace() or line.startswith('#')))
-
-	for line in lines:
+	for line in filter(lambda ln: not (ln.isspace() or ln.startswith('#')), open(filename, 'r')):
 
 		values = line.split()
 		
