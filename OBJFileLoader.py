@@ -60,24 +60,20 @@ def MTL(filename):
 	mtl 	 	= None							# 
 	path 		= dirname(abspath(filename)) 	# 
 	
-	for line in open(filename, 'r'):
+	lines = (line for line in open(filename, 'r') if not (line.isspace() or line.startswith('#')))
 
-		if line.startswith('#'):
-			continue
-		
+	for line in lines:
+
 		values = line.split()
-		
-		if not values:
-			continue
 		
 		if values[0] == 'newmtl':
 			mtl = contents[values[1]] = {}
 		elif mtl is None:
-			raise ValueError('MTL file doesn\'t start with newmtl statementt')
+			raise ValueError('MTL file doesn\'t start with newmtl statement')
 		elif values[0] == 'map_Kd':
 			# load the texture referred to by this declaration
 			mtl[values[0]] = values[1]
-			surf = pygame.image.load(join(path, normpath(mtl['map_Kd']))) # TODO: Fix path bug
+			surf = pygame.image.load(join(path, normpath(mtl['map_Kd']))) # TODO: Fix path bug (✓)
 			image = pygame.image.tostring(surf, 'RGBA', True)
 			ix, iy = surf.get_rect().size
 			texid = mtl['texture_Kd'] = glGenTextures(1)

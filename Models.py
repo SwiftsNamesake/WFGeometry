@@ -17,12 +17,42 @@
 
 
 
+from os.path import abspath, join, dirname, normpath 	# ...
+from pygame import image 								# ...
+from OpenGL.GL import *									# ...
+
+
+
+def loadTexture(filename):
+
+	'''
+	Loads an OpenGL texture
+
+	'''
+
+	surface = pygame.image.load(filename)
+	image 	= pygame.image.tostring(surface, 'RGBA', True)
+	w, h 	= surf.get_rect().size
+
+	ID = glGenTextures(1)
+
+	glBindTexture(GL_TEXTURE_2D, ID)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
+
+	return ID
+
+
+
 def parseMTL(filename):
 
 	'''
 	Parses an MTL file
 
 	'''
+
+	materials = {}
 
 	raise NotImplementedError
 
