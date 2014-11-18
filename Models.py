@@ -142,11 +142,7 @@ def parseOBJ(filename):
 
 		elif values[0] == 'g':
 			# Group
-			# Stores lower and upper bounds (indices) of faces that belong to each group
-			# We use an OrderedDict to store the groups since the beginning of a new group
-			# determines the upper bound of the previous one.
-			data['groups'] = data.get('groups', OrderedDict()) # TODO: Fix extraneous object creation (this is were lazy evaluation comes in handy... Oh well.)
-			data['groups'].append()
+			data['groups'].append((values[1], len(data['faces']))) # Group name with its lower bound (index into faces array)
 
 		elif values[0] == 'o':
 			# Object
@@ -169,6 +165,7 @@ def parseOBJ(filename):
 			# Unknown parameter encountered
 			raise ValueError('\'{0}\' is not a recognised parameter.'.format(values[0]))
 
+	data['groups'] = { group : (lower, upper) for (group, lower), (_, upper) in zip(data['groups'], data['groups'][1:])} # Maps group names to their lower and upper bounds
 	return data
 
 
