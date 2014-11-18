@@ -8,12 +8,12 @@
 
 # TODO | - Define API
 #        - 3D vectors
-#        - Handle units
+#        - Handle units (conversion factor)
 #        - Splines, bezier curves (advanced, low priority)
 #        - Pre-existing parsing modules
 #
 # SPEC | - Exports a Model class and parsers for Wavefront MTL and OBJ files
-#        -
+#        - SI units by default
 
 
 
@@ -74,8 +74,11 @@ def parseOBJ(filename):
 
 	raise NotImplementedError('Walk along. Nothing to see here.')
 
-	model 	= [] 				# Buffer 
-	data 	= defaultdict(list)	#
+	model 	= [] 							# Buffer 
+	data 	= defaultdict(list)				#
+	path 	= dirname(abspath(filename)) 	# Path to containing folder
+	
+	fullPath = lambda fn: join(path, fn) # Constructs a full path name
 
 	for line in filter(lambda ln: not (ln.isspace() or ln.startswith('#')), open(filename, 'r')):
 
@@ -102,7 +105,7 @@ def parseOBJ(filename):
 			pass
 		elif values[0] = 'mtllib':
 			#
-			pass
+			data['mtl'] = parseMTL(fullPath(values[1]))
 
 	return model
 
