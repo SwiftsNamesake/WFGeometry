@@ -356,8 +356,8 @@ def bindEvents():
 
 	def bindAvatarEvents():
 
-		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 1}, lambda event: button.pressIf(*event.pos))
-		dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 1}, lambda event: button.release())
+		# dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 1}, lambda event: button.pressIf(*event.pos))
+		# dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 1}, lambda event: button.release())
 
 		dispatcher.bind({'type': MOUSEMOTION, 'also': (K_RSHIFT,)}, lambda event: camera.set(ry=camera.ry+event.rel[0], rx=camera.rx+event.rel[1]))
 
@@ -384,9 +384,9 @@ def bindEvents():
 		# NOTE: K_w is not the scancode for 'w'
 		w, a, s, d = 17, 30, 31, 32
 
-		dispatcher.bind({'type': KEYDOWN, 'unicode': 'w'}, 	lambda event: camera.set(dtz=-4, translating=True))
+		dispatcher.bind({'type': KEYDOWN, 'unicode': 'w'}, 	lambda event: camera.set(dtz=4, translating=True))
 		dispatcher.bind({'type': KEYDOWN, 'unicode': 'a'}, 	lambda event: camera.set(dry=5, rotating=True))
-		dispatcher.bind({'type': KEYDOWN, 'unicode': 's'}, 	lambda event: camera.set(dtz=4, translating=True))
+		dispatcher.bind({'type': KEYDOWN, 'unicode': 's'}, 	lambda event: camera.set(dtz=-4, translating=True))
 		dispatcher.bind({'type': KEYDOWN, 'unicode': 'd'}, 	lambda event: camera.set(dry=-5, rotating=True))
 
 		dispatcher.bind({'type': KEYUP, 'scancode': w}, lambda event: camera.setTranslating(False))

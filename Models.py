@@ -161,15 +161,16 @@ def createBuffer(faces, data):
 
 	glBuffer = glGenLists(1)
 	glNewList(glBuffer, GL_COMPILE)
-	glEnable(GL_TEXTURE_2D)
 	glFrontFace(GL_CCW)
 
 	for vertices, texcoords, normals, material in faces:
 
 		# TODO: Handle all texture and colour types
 		if (texcoords is not None) and ('map_Kd' in material):
+			glEnable(GL_TEXTURE_2D)
 			glBindTexture(GL_TEXTURE_2D, material['map_Kd']) # Use diffuse texture map if available
 		else:
+			glDisable(GL_TEXTURE_2D)
 			glColor(material['Kd']) # Use diffuse colour
 
 		glBegin(GL_POLYGON)
