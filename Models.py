@@ -6,7 +6,7 @@
 # November 18 2014
 #
 
-# TODO | - Define API
+# TODO | - Define API (cf __all__)
 #        - 3D vectors
 #        - Handle units (conversion factor)
 #        - Splines, bezier curves (advanced, low priority)
@@ -14,6 +14,7 @@
 #        - Make sure input files are closed properly
 #        - Reference official specs, describe formats, ensure correctness
 #        - Optimize, comment, refactor
+#        - Use optional logger (cf. SwiftUtils.)
 #
 # SPEC | - Exports a Model class and parsers for Wavefront MTL and OBJ files
 #        - SI units by default
@@ -199,7 +200,11 @@ def createBuffer(faces, data):
 		glBegin(GL_POLYGON)
 
 		for i, v in enumerate(vertices):
-			pass
+			if normals[i] > 0:
+				glNormal3fv(normals[i])
+			if texcoords is not None:
+				glTexCoord2fv(texcoords[i])
+			glVertex3fv(v)
 
 		glEnd()
 

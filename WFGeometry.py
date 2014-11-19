@@ -31,9 +31,10 @@ from pygame.constants import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-from OBJFileLoader import * 		# Object loader
-from collections import namedtuple	#
-from math import sin, cos, radians	#
+# from OBJFileLoader import * 		# Object loader
+from Models import createBuffers	# 
+from collections import namedtuple	# 
+from math import sin, cos, radians	# 
 from random import choice
 
 from SwiftUtils.EventDispatcher import EventDispatcher
