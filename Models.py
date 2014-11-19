@@ -116,8 +116,6 @@ def parseOBJ(filename):
 	data 	= defaultdict(list)	#
 	path 	= parent(filename) 	# Path to containing folder
 
-
-
 	for line in filter(lambda ln: not (ln.isspace() or ln.startswith('#')), open(filename, 'r')):
 
 		if values[0] == 'v':
@@ -134,6 +132,7 @@ def parseOBJ(filename):
 
 		elif values[0] == 'f':
 			# Face
+			# TODO: Save indices instead (would probably save memory) (?)
 			face = [vertex.split('/') for vertex in values[1:].split()] # Extract indices for each vertex of the face
 			data['faces'].append(([data['vertices'][int(vertex[0])+1] for vertex in face], 							# Vertices
 								  [data['textures'][int(vertex[0])+1] for vertex in face] if face != '' else None, 	# Texture coordinates
@@ -159,14 +158,55 @@ def parseOBJ(filename):
 
 		elif values[0] == 'usemtl':
 			# Use MTL material
+			# TODO: Handle usemtl (null)
 			data['material'] = data['mtl'][values[1]] # Current material
 
 		else:
 			# Unknown parameter encountered
 			raise ValueError('\'{0}\' is not a recognised parameter.'.format(values[0]))
 
-	data['groups'] = { group : (lower, upper) for (group, lower), (_, upper) in zip(data['groups'], data['groups'][1:])} # Maps group names to their lower and upper bounds
+	assert data['groups'][0][0] == 0, 'All faces must belong to a group.'
+	data['groups'] = { group : (lower, upper) for (group, lower), (_, upper) in zip(data['groups'], data['groups'][1:])} # Map group names to their lower and upper bounds
 	return data
+
+
+
+def createBuffer(faces, data):
+
+	'''
+	Creates a single OpenGL buffer from the given faces.
+
+	'''
+
+	# TODO: Options (?)
+	# TODO: Find a more suitable name (?)
+	# TODO: Better documentation
+
+	glBuffer = glGenLists(1)
+	glNewList(glBuffer, GL_COMPILE)
+	glEnable(GL_TEXTURE_2D)
+	glFrontFace(GL_CCW)
+
+	for vertices, texcoords, normals, material in faces:
+		material = data[material]
+
+		# TODO: Handle all texture and colour types
+		if (texcoords is not None) and ('map_Kd' in material):
+			glBindTexture(GL_TEXTURE_2D, material['map_Kd']) # Use diffuse texture map if available
+		else:
+			glColor(material['Kd']) # Use diffuse colour
+
+		glBegin(GL_POLYGON)
+
+		for i, v in enumerate(vertices):
+			pass
+
+		glEnd()
+
+	glDisable(GL_TEXTURE_2D)
+	glEndList()
+
+	return glBuffer
 
 
 
@@ -178,8 +218,16 @@ def createBuffers(filename, groups=True):
 	'''
 
 	# TODO: Look into all non-deprecated glEnable arguments, make sure they're handled properly
-
+	# NOTE: The 'groups' argument is currently ignored
 	raise NotImplementedError('Leave me alone. I\'m not ready yet')
+
+	buffers = {}
+	data 	= parseOBJ(filename)
+
+	for group, (lower, upper) in data['groups']:
+		buffers[group] = createBuffer(data['faces'][lower:upper], data)
+
+	return buffers
 
 
 
@@ -218,7 +266,9 @@ def main():
 
 	'''
 
-	obj = parseOBJ('...')
+	hombre = parseOBJ('data/hombre#2.obj')
+	groups = parseOBJ('data/hombre.obj')
+
 
 
 

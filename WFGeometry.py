@@ -78,7 +78,8 @@ def InitGL():
 	 
 	# Load object after pygame init
 	# obj = OBJ(sys.argv[1], swapyz=True)
-	models = [OBJ(fn, swapyz=False) for fn in ('data/villa#2.obj', 'data/square.obj', 'data/cube.obj', 'data/hombre#2.obj')[-1:]]
+	# TODO: Fix access violation bug (occurs whenever more than one OBJ is rendered)
+	models = [OBJ(fn, swapyz=False) for fn in ('data/villa.obj', 'data/cube.obj', 'data/hombre#2.obj')[-3:-2]]
 
 	glMatrixMode(GL_PROJECTION)
 	glLoadIdentity()

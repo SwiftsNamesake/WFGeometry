@@ -162,8 +162,8 @@ class OBJ:
  
 		self.gl_list = glGenLists(1)
 		glNewList(self.gl_list, GL_COMPILE)
-		glEnable(GL_TEXTURE_2D)
-		glFrontFace(GL_CCW)
+		glEnable(GL_TEXTURE_2D) # TODO: Determine why this is required (even for diffuse colours)
+		glFrontFace(GL_CCW)		# TODO: Determine what this does
 
 		for face in self.faces:
 			vertices, normals, texture_coords, material = face
