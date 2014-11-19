@@ -127,7 +127,6 @@ def parseOBJ(filename):
 
 		if values[0] == 'v':
 			# Vertex coordinates
-			print('Found a vertex')
 			data['vertices'].append([float(v) for v in values[1:4]]) # TODO: Handle invalid vertex data
 
 		elif values[0] == 'vn':
@@ -142,9 +141,6 @@ def parseOBJ(filename):
 			# Face
 			# TODO: Save indices instead (would probably save memory) (?)
 			face = [vertex.split('/') for vertex in values[1:]] # Extract indices for each vertex of the face
-			print('Vertices size:', len(data['vertices']))
-			print('\n'.join('{0} indices: {1}'.format(prop, len(data[prop])) for prop in ('vertices', 'textures', 'normals')))
-			print('normals', data['normals'])
 			data['faces'].append(([data['vertices'][int(vertex[0])-1] for vertex in face], 							# Vertices
 								  [data['textures'][int(vertex[1])-1] for vertex in face] if face != '' else None, 	# Texture coordinates
 								  [data['normals'][int(vertex[2])-1]  for vertex in face], 							# Normals
@@ -283,6 +279,8 @@ def main():
 
 	hombre = parseOBJ('data/hombre#2.obj')
 	groups = parseOBJ('data/hombre.obj')
+
+	print(groups)
 
 
 
