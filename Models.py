@@ -69,8 +69,10 @@ def parseMTL(filename):
 
 	'''
 
-	raise NotImplementedError('Walk along. Nothing to see here.')
+	#raise NotImplementedError('Walk along. Nothing to see here.')
 
+	print('Parsing OBJ file:', filename)
+	
 	materials = {} 				# TODO: Dict comprehension, itertools, split on "newmtl" (?)
 	current = None 				# Name of the current material
 	path 	= parent(filename) 	# Path to containing folder
@@ -112,15 +114,20 @@ def parseOBJ(filename):
 	# TODO: Difference between groups and objects (?)
 	# TODO: Handle multiple groups properly (eg. g group1 group2 group3)
 
-	raise NotImplementedError('Walk along. Nothing to see here.')
+	#raise NotImplementedError('Walk along. Nothing to see here.')
+
+	print('Parsing OBJ file:', filename)
 
 	data 	= defaultdict(list)	#
 	path 	= parent(filename) 	# Path to containing folder
 
 	for line in filter(lambda ln: not (ln.isspace() or ln.startswith('#')), open(filename, 'r')):
 
+		values = line.split()
+
 		if values[0] == 'v':
 			# Vertex coordinates
+			print('Found a vertex')
 			data['vertices'].append([float(v) for v in values[1:4]]) # TODO: Handle invalid vertex data
 
 		elif values[0] == 'vn':
@@ -134,10 +141,13 @@ def parseOBJ(filename):
 		elif values[0] == 'f':
 			# Face
 			# TODO: Save indices instead (would probably save memory) (?)
-			face = [vertex.split('/') for vertex in values[1:].split()] # Extract indices for each vertex of the face
-			data['faces'].append(([data['vertices'][int(vertex[0])+1] for vertex in face], 							# Vertices
-								  [data['textures'][int(vertex[0])+1] for vertex in face] if face != '' else None, 	# Texture coordinates
-								  [data['normals'][int(vertex[0])+1]  for vertex in face], 							# Normals
+			face = [vertex.split('/') for vertex in values[1:]] # Extract indices for each vertex of the face
+			print('Vertices size:', len(data['vertices']))
+			print('\n'.join('{0} indices: {1}'.format(prop, len(data[prop])) for prop in ('vertices', 'textures', 'normals')))
+			print('normals', data['normals'])
+			data['faces'].append(([data['vertices'][int(vertex[0])-1] for vertex in face], 							# Vertices
+								  [data['textures'][int(vertex[1])-1] for vertex in face] if face != '' else None, 	# Texture coordinates
+								  [data['normals'][int(vertex[2])-1]  for vertex in face], 							# Normals
 								   data['material'])) 																# Material
 
 		elif values[0] == 'g':
@@ -166,7 +176,7 @@ def parseOBJ(filename):
 			# Unknown parameter encountered
 			raise ValueError('\'{0}\' is not a recognised parameter.'.format(values[0]))
 
-	assert data['groups'][0][0] == 0, 'All faces must belong to a group.'
+	assert data['groups'][0][1] == 0, 'All faces must belong to a group. (lowest index is {0})'.format(data['groups'][0][1])
 	data['groups'] = { group : (lower, upper) for (group, lower), (_, upper) in zip(data['groups'], data['groups'][1:])} # Map group names to their lower and upper bounds
 	return data
 

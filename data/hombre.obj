@@ -4,7 +4,7 @@
 
 mtllib hombre.mtl
 
-#g Mesh1 leg1 Model
+g Mesh1 leg1 Model
 
 usemtl Color_B21
 v 200 165 -0
