@@ -157,7 +157,7 @@ class OBJ:
 					if len(w) >= 3 and len(w[2]) > 0:
 						norms.append(int(w[2]))
 					else:
-						norms.append(0)
+						norms.append(0) # Append 0 if normal index is missing
 				self.faces.append((face, norms, texcoords, material))
  
 		self.gl_list = glGenLists(1)

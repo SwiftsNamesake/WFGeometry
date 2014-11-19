@@ -39,7 +39,7 @@ from random import choice
 
 from SwiftUtils.EventDispatcher import EventDispatcher
 from Camera import Camera
-from Utilities import Point, Rect
+from Utilities import Point, Rect, glDraw
 
 
 
@@ -80,7 +80,9 @@ def InitGL():
 	# Load object after pygame init
 	# obj = OBJ(sys.argv[1], swapyz=True)
 	# TODO: Fix access violation bug (occurs whenever more than one OBJ is rendered)
-	models = [OBJ(fn, swapyz=False) for fn in ('data/villa.obj', 'data/cube.obj', 'data/hombre#2.obj')[-3:-2]]
+	# TODO: Separate context creation and data loading
+	# models = [OBJ(fn, swapyz=False) for fn in ('data/villa.obj', 'data/cube.obj', 'data/hombre#2.obj')[-3:-2]]
+	models = createBuffers('data/cube.obj', groups=False)
 
 	glMatrixMode(GL_PROJECTION)
 	glLoadIdentity()
@@ -309,11 +311,12 @@ def bindEvents():
 
 	models 		= InitGL()
 	camera 		= Camera()
-	avatar 		= Avatar(choice(models).gl_list)
+	# avatar 		= Avatar(choice(models).gl_list)
+	avatar 		= Avatar(models)
 	grid 		= createGrid()
 	dispatcher 	= EventDispatcher()
 
-	button = Widget(Rect(10, 10, 150, 80), lambda: None)
+	# button = Widget(Rect(10, 10, 150, 80), lambda: None)
 
 
 	def AvatarMain(event):
@@ -346,7 +349,7 @@ def bindEvents():
 		avatar.render()
 
 		# Draw widget
-		button.render()
+		# button.render()
 
 		pygame.display.flip()
 

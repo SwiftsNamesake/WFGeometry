@@ -14,6 +14,62 @@
 
 
 
+from pygame import image 					# ...
+from contextlib import contextmanager 		# ...
+from os.path import abspath, join, dirname 	# ...
+from OpenGL.GL import *						# ...
+
+
+
+@contextmanager
+def glDraw(mode):
+
+	'''
+	Context manager for OpenGL primitive rendering, eg.
+	with glDraw(GL_POLYGON):
+		# Draw some polygons
+		...
+	'''
+	
+	glBegin(mode)
+	yield
+	glEnd()
+
+
+
+def parent(filename):
+
+	'''
+	Retrieves parent directory of the specified file
+
+	'''
+
+	return dirname(abspath(filename))
+
+
+
+def loadTexture(filename):
+
+	'''
+	Loads an OpenGL texture
+
+	'''
+
+	surface = image.load(filename)
+	texture = image.tostring(surface, 'RGBA', True)
+	w, h 	= surface.get_rect().size
+
+	ID = glGenTextures(1)
+
+	glBindTexture(GL_TEXTURE_2D, ID)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture)
+
+	return ID
+
+
+
 class MatrixStack:
 
 	'''

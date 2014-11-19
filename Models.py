@@ -21,44 +21,11 @@
 
 
 
-from os.path import abspath, join, dirname, normpath 	# ...
-from pygame import image 								# ...
 from OpenGL.GL import *									# ...
 from collections import defaultdict, OrderedDict 		# ...
+from Utilities import parent, loadTexture 				# ...
+from os.path import join								# ...
 # from itertools
-
-
-
-def parent(filename):
-
-	'''
-	Retrieves parent directory of the specified file
-
-	'''
-
-	return dirname(abspath(filename))
-
-
-
-def loadTexture(filename):
-
-	'''
-	Loads an OpenGL texture
-
-	'''
-
-	surface = pygame.image.load(filename)
-	image 	= pygame.image.tostring(surface, 'RGBA', True)
-	w, h 	= surf.get_rect().size
-
-	ID = glGenTextures(1)
-
-	glBindTexture(GL_TEXTURE_2D, ID)
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
-
-	return ID
 
 
 
@@ -140,11 +107,12 @@ def parseOBJ(filename):
 		elif values[0] == 'f':
 			# Face
 			# TODO: Save indices instead (would probably save memory) (?)
+			# TODO: Refactor (?)
 			face = [vertex.split('/') for vertex in values[1:]] # Extract indices for each vertex of the face
-			data['faces'].append(([data['vertices'][int(vertex[0])-1] for vertex in face], 							# Vertices
-								  [data['textures'][int(vertex[1])-1] for vertex in face] if face != '' else None, 	# Texture coordinates
-								  [data['normals'][int(vertex[2])-1]  for vertex in face], 							# Normals
-								   data['material'])) 																# Material
+			data['faces'].append(([data['vertices'][int(vertex[0])-1] for vertex in face], 								 # Vertices
+								  [data['textures'][int(vertex[1])-1] for vertex in face] if face[0][1] != '' else None, # Texture coordinates
+								  [data['normals'][int(vertex[2])-1]  for vertex in face] if face[0][2] != '' else None, # Normals
+								   data['material'])) 																	 # Material
 
 		elif values[0] == 'g':
 			# Group
@@ -189,13 +157,14 @@ def createBuffer(faces, data):
 	# TODO: Find a more suitable name (?)
 	# TODO: Better documentation
 
+	# NOTE: Fails unless OpenGL has been initialized
+
 	glBuffer = glGenLists(1)
 	glNewList(glBuffer, GL_COMPILE)
 	glEnable(GL_TEXTURE_2D)
 	glFrontFace(GL_CCW)
 
 	for vertices, texcoords, normals, material in faces:
-		material = data[material]
 
 		# TODO: Handle all texture and colour types
 		if (texcoords is not None) and ('map_Kd' in material):
@@ -206,7 +175,7 @@ def createBuffer(faces, data):
 		glBegin(GL_POLYGON)
 
 		for i, v in enumerate(vertices):
-			if normals[i] > 0:
+			if normals is not None:
 				glNormal3fv(normals[i])
 			if texcoords is not None:
 				glTexCoord2fv(texcoords[i])
@@ -229,14 +198,19 @@ def createBuffers(filename, groups=True):
 	'''
 
 	# TODO: Look into all non-deprecated glEnable arguments, make sure they're handled properly
-	# NOTE: The 'groups' argument is currently ignored
-	raise NotImplementedError('Leave me alone. I\'m not ready yet')
+	# TODO: Refactor (if statement looks ugly)
+	#raise NotImplementedError('Leave me alone. I\'m not ready yet')
 
 	buffers = {}
 	data 	= parseOBJ(filename)
 
-	for group, (lower, upper) in data['groups']:
-		buffers[group] = createBuffer(data['faces'][lower:upper], data)
+	print(data['groups'])
+
+	if groups:
+		for group, (lower, upper) in data['groups']:
+			buffers[group] = createBuffer(data['faces'][lower:upper], data)
+	else:
+		return createBuffer(data['faces'], data)
 
 	return buffers
 
@@ -277,10 +251,13 @@ def main():
 
 	'''
 
-	hombre = parseOBJ('data/hombre#2.obj')
-	groups = parseOBJ('data/hombre.obj')
+	from WFGeometry import InitGL
+	
+	hombre = createBuffers('data/hombre#2.obj', groups=False)
+	# groups = createBuffers('data/hombre.obj', groups=False)
 
-	print(groups)
+	# print(groups)
+	print(hombre)
 
 
 
