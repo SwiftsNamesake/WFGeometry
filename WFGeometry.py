@@ -82,7 +82,8 @@ def InitGL():
 	# TODO: Fix access violation bug (occurs whenever more than one OBJ is rendered)
 	# TODO: Separate context creation and data loading
 	# models = [OBJ(fn, swapyz=False) for fn in ('data/villa.obj', 'data/cube.obj', 'data/hombre#2.obj')[-3:-2]]
-	models = createBuffers('data/cube.obj', groups=False)
+	models = createBuffers('data/villa.obj', groups=True)
+	print(models)
 
 	glMatrixMode(GL_PROJECTION)
 	glLoadIdentity()
@@ -92,7 +93,6 @@ def InitGL():
 	glMatrixMode(GL_MODELVIEW)
 
 	return models
-
 
 
 
@@ -311,8 +311,8 @@ def bindEvents():
 
 	models 		= InitGL()
 	camera 		= Camera()
-	# avatar 		= Avatar(choice(models).gl_list)
-	avatar 		= Avatar(models)
+	avatar 		= Avatar(models.pop('Mesh1'))
+	other 		= models.pop('Mesh2')
 	grid 		= createGrid()
 	dispatcher 	= EventDispatcher()
 
@@ -347,6 +347,8 @@ def bindEvents():
 
 		glCallList(grid)
 		avatar.render()
+		glTranslate(0.0, 0.0, 8.0)
+		glCallList(other)
 
 		# Draw widget
 		# button.render()

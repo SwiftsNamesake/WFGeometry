@@ -116,6 +116,7 @@ def parseOBJ(filename):
 
 		elif values[0] == 'g':
 			# Group
+			print('Adding group:', values[1])
 			data['groups'].append((values[1], len(data['faces']))) # Group name with its lower bound (index into faces array)
 
 		elif values[0] == 'o':
@@ -141,7 +142,10 @@ def parseOBJ(filename):
 			raise ValueError('\'{0}\' is not a recognised parameter.'.format(values[0]))
 
 	assert data['groups'][0][1] == 0, 'All faces must belong to a group. (lowest index is {0})'.format(data['groups'][0][1])
-	data['groups'] = { group : (lower, upper) for (group, lower), (_, upper) in zip(data['groups'], data['groups'][1:])} # Map group names to their lower and upper bounds
+	print('Groups', data['groups'])
+	# Map group names to their lower and upper bounds
+	data['groups'] = { group : (low, upp) for (group, low), (_, upp) in zip(data['groups'], data['groups'][1:]+[(None, len(data['faces']))])}
+	print('Groups', data['groups'])
 	return data
 
 
@@ -156,20 +160,24 @@ def createBuffer(faces, data):
 	# TODO: Options (?)
 	# TODO: Find a more suitable name (?)
 	# TODO: Better documentation
+	# TODO: Look into all non-deprecated glEnable arguments, make sure they're handled properly
 
 	# NOTE: Fails unless OpenGL has been initialized
 
 	glBuffer = glGenLists(1)
 	glNewList(glBuffer, GL_COMPILE)
-	glFrontFace(GL_CCW)
+	glFrontFace(GL_CCW) # TODO: Cause of the colour bug (?)
+	# glCullFace(GL_BACK)
 
 	for vertices, texcoords, normals, material in faces:
 
 		# TODO: Handle all texture and colour types
 		if (texcoords is not None) and ('map_Kd' in material):
+			print('Using texture')
 			glEnable(GL_TEXTURE_2D)
 			glBindTexture(GL_TEXTURE_2D, material['map_Kd']) # Use diffuse texture map if available
 		else:
+			print('Using colour')
 			glDisable(GL_TEXTURE_2D)
 			glColor(material['Kd']) # Use diffuse colour
 
@@ -198,17 +206,15 @@ def createBuffers(filename, groups=True):
 
 	'''
 
-	# TODO: Look into all non-deprecated glEnable arguments, make sure they're handled properly
 	# TODO: Refactor (if statement looks ugly)
 	#raise NotImplementedError('Leave me alone. I\'m not ready yet')
 
 	buffers = {}
 	data 	= parseOBJ(filename)
 
-	print(data['groups'])
-
 	if groups:
-		for group, (lower, upper) in data['groups']:
+		for group, (lower, upper) in data['groups'].items():
+			print(group)
 			buffers[group] = createBuffer(data['faces'][lower:upper], data)
 	else:
 		return createBuffer(data['faces'], data)
