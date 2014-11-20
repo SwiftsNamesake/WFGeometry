@@ -25,9 +25,11 @@ from OpenGL.GL import *									# ...
 from collections import defaultdict, OrderedDict 		# ...
 from Utilities import parent, loadTexture 				# ...
 from os.path import join								# ...
+from SwiftUtils.SwiftUtils import Logger
 # from itertools
 
 
+logger = Logger()
 
 def parseMTL(filename):
 
@@ -38,7 +40,7 @@ def parseMTL(filename):
 
 	#raise NotImplementedError('Walk along. Nothing to see here.')
 
-	print('Parsing OBJ file:', filename)
+	logger.log('parseMTL', 'Parsing MTL file: %s\n' % filename, kind='log')
 	
 	materials = {} 				# TODO: Dict comprehension, itertools, split on "newmtl" (?)
 	current = None 				# Name of the current material
@@ -80,10 +82,11 @@ def parseOBJ(filename):
 	# TODO: Use namedtuple to pack face data (?)
 	# TODO: Difference between groups and objects (?)
 	# TODO: Handle multiple groups properly (eg. g group1 group2 group3)
+	# TODO: Handle convex polygons correctly
 
 	#raise NotImplementedError('Walk along. Nothing to see here.')
 
-	print('Parsing OBJ file:', filename)
+	logger.log('parseMTL', 'Parsing OBJ file: %s\n' % filename, kind='log')
 
 	data 	= defaultdict(list)	#
 	path 	= parent(filename) 	# Path to containing folder
@@ -116,8 +119,8 @@ def parseOBJ(filename):
 
 		elif values[0] == 'g':
 			# Group
-			print('Adding group:', values[1])
-			data['groups'].append((values[1], len(data['faces']))) # Group name with its lower bound (index into faces array)
+			print('Adding group:', values[2])
+			data['groups'].append((values[2], len(data['faces']))) # Group name with its lower bound (index into faces array)
 
 		elif values[0] == 'o':
 			# Object
@@ -167,17 +170,16 @@ def createBuffer(faces, data):
 	glBuffer = glGenLists(1)
 	glNewList(glBuffer, GL_COMPILE)
 	glFrontFace(GL_CCW) # TODO: Cause of the colour bug (?)
+	# glDisable(GL_CULL_FACE)
 	# glCullFace(GL_BACK)
 
 	for vertices, texcoords, normals, material in faces:
 
 		# TODO: Handle all texture and colour types
 		if (texcoords is not None) and ('map_Kd' in material):
-			print('Using texture')
 			glEnable(GL_TEXTURE_2D)
 			glBindTexture(GL_TEXTURE_2D, material['map_Kd']) # Use diffuse texture map if available
 		else:
-			print('Using colour')
 			glDisable(GL_TEXTURE_2D)
 			glColor(material['Kd']) # Use diffuse colour
 
@@ -212,12 +214,8 @@ def createBuffers(filename, groups=True):
 	buffers = {}
 	data 	= parseOBJ(filename)
 
-	if groups:
-		for group, (lower, upper) in data['groups'].items():
-			print(group)
-			buffers[group] = createBuffer(data['faces'][lower:upper], data)
-	else:
-		return createBuffer(data['faces'], data)
+	for group, (lower, upper) in data['groups'].items():
+		buffers[group] = createBuffer(data['faces'][lower:upper], data)
 
 	return buffers
 
@@ -264,7 +262,6 @@ def main():
 	# groups = createBuffers('data/hombre.obj', groups=False)
 
 	# print(groups)
-	print(hombre)
 
 
 

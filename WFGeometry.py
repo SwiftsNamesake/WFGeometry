@@ -15,8 +15,8 @@
 #        - 3D Widgets
 #
 #
-# SPEC | -
-#        -
+# SPEC | - 
+#        - 
 
 
 
@@ -76,14 +76,13 @@ def InitGL():
 	glEnable(GL_COLOR_MATERIAL)
 	glEnable(GL_DEPTH_TEST)
 	glShadeModel(GL_SMOOTH)           # Most obj files expect to be smooth-shaded
-	 
+
 	# Load object after pygame init
 	# obj = OBJ(sys.argv[1], swapyz=True)
 	# TODO: Fix access violation bug (occurs whenever more than one OBJ is rendered)
 	# TODO: Separate context creation and data loading
 	# models = [OBJ(fn, swapyz=False) for fn in ('data/villa.obj', 'data/cube.obj', 'data/hombre#2.obj')[-3:-2]]
-	models = createBuffers('data/villa.obj', groups=True)
-	print(models)
+	models = createBuffers('data/hombre.obj', groups=True)
 
 	glMatrixMode(GL_PROJECTION)
 	glLoadIdentity()
@@ -121,8 +120,10 @@ class Avatar:
 
 		self.vf = 0 #  Forward velocity
 
-		print('Avatar model:', model)
 		self.model = model # Currently an OpenGL list
+
+		self.armRot = Point(0, 0, 0)
+		self.darmRot = 2
 
 
 	def animate(self, dt):
@@ -142,8 +143,51 @@ class Avatar:
 
 		self.forward(self.vf) # Animate forwards
 
+		self.armRot.z += self.darmRot*dt
+		if abs(self.armRot.z) > 15: self.darmRot *= (-1)
 		# print('Pos:', self.pos, 'Rot:', self.rot)
 		# print('v:', self.v, 'dR:', self.ω)
+
+
+	def renderPart(self, part, angle, pivot, vector):
+		
+		'''
+		Docstring goes here
+
+		'''
+
+		# TODO: Comment, explain arguments, write docstring
+
+		# 
+		glTranslate(*pivot)
+		glRotate(angle, *vector)
+		glTranslate(-pivot[0], -pivot[1], -pivot[2])
+		glCallList(self.model[part])
+
+		# Reset matrix
+		glTranslate(*pivot)
+		glRotate(-angle, *vector)
+		glTranslate(-pivot[0], -pivot[1], -pivot[2])
+
+
+
+	def applyTransformations(self, undo=False):
+
+		'''
+		Docstring goes here
+
+		'''
+
+		if not undo:
+			glTranslate(self.pos.x, self.pos.y, self.pos.z) # TODO: Get rid of scaling
+			glRotate(self.rot.x, 1, 0, 0)
+			glRotate(self.rot.y, 0, 1, 0)
+			glRotate(self.rot.z, 0, 0, 1)
+		else:
+			glRotate(-self.rot.z, 0, 0, 1)
+			glRotate(-self.rot.y, 0, 1, 0)
+			glRotate(-self.rot.x, 1, 0, 0)
+			glTranslate(-self.pos.x, -self.pos.y, -self.pos.z) # TODO: Get rid of scaling
 
 
 	def render(self):
@@ -154,19 +198,25 @@ class Avatar:
 		'''
 
 		# Apply transformations (relative to modelview matrix)
-		glTranslate(self.pos.x/20.0, self.pos.y/20.0, self.pos.z/20.0 - 2.5) # TODO: Get rid of scaling
-		glRotate(self.rot.x, 1, 0, 0)
-		glRotate(self.rot.y, 0, 1, 0)
-		glRotate(self.rot.z, 0, 0, 1)
+		self.applyTransformations()
 
 		# Render
-		glCallList(self.model)
+		#for part, data in self.model.items():
+		#	glCallList(data)
+		for part in ('Torso1', 'leg1', 'leg2'):
+			glCallList(self.model[part])
+
+		# TODO: Rotate about a pivot (✓)
+		# TODO: Arbitrary vector rotations
+
+		self.renderPart('arm1',  self.armRot.z, ( 0.317, 1.76, 0), (0, 0, 1)) # Draw first arm
+		self.renderPart('arm2', -self.armRot.z, (-0.317, 1.76, 0), (0, 0, 1)) # Draw second arm
+
+		for part in ('head1', 'eye1', 'eye2', 'mouth1', 'nose1', 'hat1'):
+			self.renderPart(part, self.armRot.z, (0.0, 0.0, 0.0), (0, 1, 0))
 
 		# Undo transformations
-		glRotate(-self.rot.z, 0, 0, 1)
-		glRotate(-self.rot.y, 0, 1, 0)
-		glRotate(-self.rot.x, 1, 0, 0)
-		glTranslate(-self.pos.x, -self.pos.y, -self.pos.z) # TODO: Get rid of scaling
+		self.applyTransformations(undo=True)
 
 
 	def forward(self, v):
@@ -311,8 +361,7 @@ def bindEvents():
 
 	models 		= InitGL()
 	camera 		= Camera()
-	avatar 		= Avatar(models.pop('Mesh1'))
-	other 		= models.pop('Mesh2')
+	avatar 		= Avatar(models, x=2.0, z=-2.0)
 	grid 		= createGrid()
 	dispatcher 	= EventDispatcher()
 
@@ -347,8 +396,6 @@ def bindEvents():
 
 		glCallList(grid)
 		avatar.render()
-		glTranslate(0.0, 0.0, 8.0)
-		glCallList(other)
 
 		# Draw widget
 		# button.render()
@@ -361,24 +408,22 @@ def bindEvents():
 		# dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 1}, lambda event: button.pressIf(*event.pos))
 		# dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 1}, lambda event: button.release())
 
-		dispatcher.bind({'type': MOUSEMOTION, 'also': (K_RSHIFT,)}, lambda event: camera.set(ry=camera.ry+event.rel[0], rx=camera.rx+event.rel[1]))
+		for pattern, handler in (
+			#
+			# ({'type': MOUSEMOTION, 'also': (K_RSHIFT,)}, lambda event: camera.set(ry=camera.ry+event.rel[0], rx=camera.rx+event.rel[1])),
+			({'type': MOUSEMOTION}, lambda event: camera.set(ry=camera.ry+event.rel[0]*pygame.mouse.get_pressed()[0], rx=camera.rx+event.rel[1]*pygame.mouse.get_pressed()[0])),
+			({'type': KEYDOWN, 'key': K_LEFT}, lambda event: avatar.set(ω=Point(y= 5))),
+			({'type': KEYDOWN, 'key': K_RIGHT}, lambda event: avatar.set(ω=Point(y=-5))),
+			({'type': KEYUP, 'key': K_LEFT}, lambda event: avatar.set(ω=Point(y= 0))),
+			({'type': KEYUP, 'key': K_RIGHT}, lambda event: avatar.set(ω=Point(y= 0))),
 
-		dispatcher.bind({'type': KEYDOWN, 'key': K_LEFT}, 	lambda event: avatar.set(ω=Point(y= 5)))
-		dispatcher.bind({'type': KEYDOWN, 'key': K_RIGHT}, 	lambda event: avatar.set(ω=Point(y=-5)))
-		dispatcher.bind({'type': KEYUP, 'key': K_LEFT}, 	lambda event: avatar.set(ω=Point(y= 0)))
-		dispatcher.bind({'type': KEYUP, 'key': K_RIGHT}, 	lambda event: avatar.set(ω=Point(y= 0)))
-
-		# dispatcher.bind({'type': KEYDOWN, 'key': K_UP}, 	lambda event: avatar.set(v=Point(z=-3)))
-		# dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, 	lambda event: avatar.set(v=Point(z= 3)))
-		dispatcher.bind({'type': KEYDOWN, 'key': K_UP, 'mod': 0}, lambda event: avatar.set(vf= 1))
-		dispatcher.bind({'type': KEYDOWN, 'key': K_UP, 'mod': 2}, lambda event: avatar.set(vf= 2))
-		dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, 	lambda event: avatar.set(vf=-1))
-		dispatcher.bind({'type': KEYUP, 'key': K_UP}, 		lambda event: avatar.set(vf= 0))
-		dispatcher.bind({'type': KEYUP, 'key': K_DOWN}, 	lambda event: avatar.set(vf= 0))
-
-		# dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, 	lambda event: avatar.set(vf=-1))
-		# dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, 	lambda event: avatar.set(vf=-1))
-		# dispatcher.bind({'type': KEYDOWN, 'key': K_DOWN}, 	lambda event: avatar.set(vf=-1))
+			#
+			({'type': KEYDOWN, 'key': K_UP, 'mod': 0}, lambda event: avatar.set(vf= 0.05)),
+			({'type': KEYDOWN, 'key': K_UP, 'mod': 2}, lambda event: avatar.set(vf= 0.1)),
+			({'type': KEYDOWN, 'key': K_DOWN}, lambda event: avatar.set(vf=-0.05)),
+			({'type': KEYUP, 'key': K_UP}, lambda event: avatar.set(vf= 0)),
+			({'type': KEYUP, 'key': K_DOWN}, lambda event: avatar.set(vf= 0))):
+			dispatcher.bind(pattern, handler)
 
 
 	def bindEvents():
@@ -395,11 +440,6 @@ def bindEvents():
 		dispatcher.bind({'type': KEYUP, 'scancode': a}, lambda event: camera.setRotating(False))
 		dispatcher.bind({'type': KEYUP, 'scancode': s}, lambda event: camera.setTranslating(False))
 		dispatcher.bind({'type': KEYUP, 'scancode': d}, lambda event: camera.setRotating(False))
-
-		# dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 1}, lambda event: camera.set(drz=-4, rotating=True))
-		# dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 3}, lambda event: camera.set(drz=4, rotating=True))
-		# dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 1}, 	lambda event: camera.setRotating(False))
-		# dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 3}, 	lambda event: camera.setRotating(False))
 
 		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 4}, lambda event: camera.setTranslation(z=camera.tz+1.2))
 		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 5}, lambda event: camera.setTranslation(z=camera.tz-1.2))
