@@ -59,8 +59,7 @@ def InitGL():
 	pygame.init()
 
 	pygame.display.set_caption('Los Hombres con sombreros')
-	pygame.display.set_icon(pygame.image.load('C:/Users/Jonatan/Desktop/Python/resources/images/minecraft/diamond_sword.png'))
-
+	pygame.display.set_icon(pygame.image.load('C:/Users/Jonatan/Desktop/Python/resources/images/paintings/mont-sainte-victoire-3.jpg'))
 
 	viewport = (int(720*2), int(480*2))
 	hx = viewport[0]/2
@@ -131,7 +130,7 @@ class Avatar:
 		Docstring goes here
 
 		'''
-		print(self.pos.y, self.v.y)
+
 		self.pos.x += self.v.x * dt
 		self.pos.y += self.v.y * dt
 		self.pos.z += self.v.z * dt
@@ -143,9 +142,7 @@ class Avatar:
 		self.forward(self.vf) # Animate forwards
 
 		self.armRot.z += self.darmRot*dt
-		if abs(self.armRot.z) > 15: self.darmRot *= (-1)
-		# print('Pos:', self.pos, 'Rot:', self.rot)
-		# print('v:', self.v, 'dR:', self.ω)
+		self.darmRot *= (-1) * (abs(self.armRot.z) > 15)
 
 
 	def renderPart(self, part, angle, pivot, vector):
@@ -243,7 +240,6 @@ class Avatar:
 		'''
 
 		for key, val in kwargs.items():
-			if (key == 'v'): print('Setting %s to %s' % (key, val))
 			setattr(self, key, val)
 
 
