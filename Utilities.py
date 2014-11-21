@@ -160,6 +160,5 @@ class Rect:
 	def height(self):
 		return self.bottom - self.top
 
-	@property
 	def within(self, x, y):
 		return (self.left <= x <= self.right) and (self.top <= y <= self.bottom)

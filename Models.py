@@ -23,7 +23,7 @@
 
 from OpenGL.GL import *									# ...
 from collections import defaultdict, OrderedDict 		# ...
-from Utilities import parent, loadTexture 				# ...
+from utilities import parent, loadTexture 				# ...
 from os.path import join								# ...
 from SwiftUtils.SwiftUtils import Logger
 # from itertools
@@ -208,16 +208,16 @@ def createBuffers(filename, groups=True):
 
 	'''
 
-	# TODO: Refactor (if statement looks ugly)
+	# TODO: Refactor (if statement looks ugly) (✓)
+	# TODO: Should a dictionary be returned even when groups is False (?)
 	#raise NotImplementedError('Leave me alone. I\'m not ready yet')
 
-	buffers = {}
-	data 	= parseOBJ(filename)
+	data = parseOBJ(filename)
 
-	for group, (lower, upper) in data['groups'].items():
-		buffers[group] = createBuffer(data['faces'][lower:upper], data)
-
-	return buffers
+	if not groups:
+		return {'model': createBuffer(data['faces'], data)}
+	else:
+		return { group : createBuffer(data['faces'][lower:upper], data) for group, (lower, upper) in data['groups'].items()}
 
 
 

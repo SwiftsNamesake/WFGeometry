@@ -13,33 +13,27 @@
 #        - Matrix helper functions (stack?) (cf. numpy)
 #        - Platformer, loading maps, triggers
 #        - 3D Widgets
-#
+#        - Performant 3D vectors (cf. numpy, magic methods, __slots__, namedtuple, type=...)
 #
 # SPEC | - 
 #        - 
 
 
 
-# Basic OBJ file viewer. needs objloader from:
-#  http://www.pygame.org/wiki/OBJFileLoader
-# LMB + move: rotate
-# RMB + move: pan
-# Scroll wheel: zoom in/out
 import sys, pygame
 from pygame.locals import *
 from pygame.constants import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-# from OBJFileLoader import * 		# Object loader
-from Models import createBuffers	# 
+from models import createBuffers	# 
 from collections import namedtuple	# 
 from math import sin, cos, radians	# 
-from random import choice
+from random import choice, random, randint
 
 from SwiftUtils.EventDispatcher import EventDispatcher
-from Camera import Camera
-from Utilities import Point, Rect, glDraw
+from camera import Camera
+from utilities import Point, Rect, glDraw
 
 
 
@@ -63,6 +57,11 @@ def InitGL():
 	'''
 
 	pygame.init()
+
+	pygame.display.set_caption('Los Hombres con sombreros')
+	pygame.display.set_icon(pygame.image.load('C:/Users/Jonatan/Desktop/Python/resources/images/minecraft/diamond_sword.png'))
+
+
 	viewport = (int(720*2), int(480*2))
 	hx = viewport[0]/2
 	hy = viewport[1]/2
@@ -132,7 +131,7 @@ class Avatar:
 		Docstring goes here
 
 		'''
-		
+		print(self.pos.y, self.v.y)
 		self.pos.x += self.v.x * dt
 		self.pos.y += self.v.y * dt
 		self.pos.z += self.v.z * dt
@@ -226,6 +225,9 @@ class Avatar:
 
 		'''
 
+		if v == 0.0:
+			return
+
 		# TODO: Tweak velocity
 		dx = sin(radians(self.rot.y))*v
 		dz = cos(radians(self.rot.y))*v
@@ -234,8 +236,14 @@ class Avatar:
 
 
 	def set(self, **kwargs):
+
+		'''
+		Docstring goes here
+
+		'''
+
 		for key, val in kwargs.items():
-			# print('Setting %s to %s' % (key, val))
+			if (key == 'v'): print('Setting %s to %s' % (key, val))
 			setattr(self, key, val)
 
 
@@ -249,6 +257,8 @@ def createGrid():
 
 	# TODO: Add options (eg. spacing, colours, origin)
 
+	width, height = 10, 10
+
 	grid = glGenLists(1)
 	glNewList(grid, GL_COMPILE)
 
@@ -260,10 +270,10 @@ def createGrid():
 
 	with glDraw(GL_TRIANGLE_STRIP):
 		glColor(1.0, 0.0, 0.0, 0.5)
-		glVertex(-5.0, 0.0, -5.0)
-		glVertex(-5.0, 0.0,  5.0)
-		glVertex( 5.0, 0.0, -5.0)
-		glVertex( 5.0, 0.0,  5.0)
+		glVertex(-width, 0.0, -height)
+		glVertex(-width, 0.0,  height)
+		glVertex( width, 0.0, -height)
+		glVertex( width, 0.0,  height)
 
 	# Y-axis
 	with glDraw(GL_LINES):
@@ -273,10 +283,10 @@ def createGrid():
 
 	with glDraw(GL_TRIANGLE_STRIP):
 		glColor(0.0, 1.0, 0.0, 0.5)
-		glVertex(0.0, -5.0, -5.0)
-		glVertex(0.0, -5.0,  5.0)
-		glVertex(0.0,  5.0, -5.0)
-		glVertex(0.0,  5.0,  5.0)
+		glVertex(0.0, -width, -height)
+		glVertex(0.0, -width,  height)
+		glVertex(0.0,  width, -height)
+		glVertex(0.0,  width,  height)
 
 	# Z-axis
 	with glDraw(GL_LINES):
@@ -286,10 +296,10 @@ def createGrid():
 
 	with glDraw(GL_TRIANGLE_STRIP):
 		glColor(0.0, 0.0, 1.0, 0.5)
-		glVertex(-5.0, -5.0, 0.0)
-		glVertex(-5.0,  5.0, 0.0)
-		glVertex( 5.0, -5.0, 0.0)
-		glVertex( 5.0,  5.0, 0.0)
+		glVertex(-width, -height, 0.0)
+		glVertex(-width,  height, 0.0)
+		glVertex( width, -height, 0.0)
+		glVertex( width,  height, 0.0)
 
 	glEndList()
 
@@ -347,7 +357,7 @@ class Widget:
 		
 		glLoadIdentity() # Don't apply camera transformations
 		glScale(sx, sy, sx)
-		glTranslate(-1.5/(sx), 1.0/sy, -1.1/sx)
+		glTranslate(-1.5/sx, 1.0/sy, -1.1/sx)
 		glCallList(self.active.gl_list)
 
 
@@ -365,6 +375,7 @@ def bindEvents():
 	grid 		= createGrid()
 	dispatcher 	= EventDispatcher()
 
+	scales = [[1+randint(0, 20)*0.05 for y in range(20)] for x in range(10)]
 	# button = Widget(Rect(10, 10, 150, 80), lambda: None)
 
 
@@ -395,7 +406,16 @@ def bindEvents():
 		camera.apply()
 
 		glCallList(grid)
-		avatar.render()
+
+		for i in range(10):
+			glTranslate(2.2, 0.0, 0.0)
+			for j in range(10):
+				sc = scales[i][j]
+				glTranslate(0.0, 0.0, 2.2)
+				glScale(sc, sc, sc)
+				avatar.render()
+				glScale(1/sc, 1/sc, 1/sc)
+			glTranslate(0.0, 0.0, -10*2.2)
 
 		# Draw widget
 		# button.render()
@@ -422,7 +442,10 @@ def bindEvents():
 			({'type': KEYDOWN, 'key': K_UP, 'mod': 2}, lambda event: avatar.set(vf= 0.1)),
 			({'type': KEYDOWN, 'key': K_DOWN}, lambda event: avatar.set(vf=-0.05)),
 			({'type': KEYUP, 'key': K_UP}, lambda event: avatar.set(vf= 0)),
-			({'type': KEYUP, 'key': K_DOWN}, lambda event: avatar.set(vf= 0))):
+			({'type': KEYUP, 'key': K_DOWN}, lambda event: avatar.set(vf= 0)),
+
+			({'type': KEYDOWN, 'key': K_SPACE}, lambda event: avatar.set(v=Point(y=0.1))),
+			({'type': KEYUP, 'key': K_SPACE}, lambda event: avatar.set(v=Point(y=-0.1)))):
 			dispatcher.bind(pattern, handler)
 
 
