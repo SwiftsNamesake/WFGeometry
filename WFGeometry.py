@@ -14,6 +14,9 @@
 #        - Platformer, loading maps, triggers
 #        - 3D Widgets
 #        - Performant 3D vectors (cf. numpy, magic methods, __slots__, namedtuple, type=...)
+#        - Skeletal animations
+#        - Vector arrows
+#        - Dynamic textures
 #
 # SPEC | - 
 #        - 
@@ -26,14 +29,16 @@ from pygame.constants import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-from models import createBuffers	# 
-from collections import namedtuple	# 
-from math import sin, cos, radians	# 
-from random import choice, random, randint
+from models import createBuffers					# 
+from collections import namedtuple					# 
+from math import sin, cos, radians, atan, degrees	# 
+from random import choice, random, randint 			# 
 
 from SwiftUtils.EventDispatcher import EventDispatcher
 from camera import Camera
 from utilities import Point, Rect, glDraw
+
+from itertools import count, cycle
 
 
 
@@ -123,6 +128,8 @@ class Avatar:
 		self.armRot = Point(0, 0, 0)
 		self.darmRot = 2
 
+		self.headR = Point(0, 0, 0) # Head rotation
+
 
 	def animate(self, dt):
 
@@ -142,7 +149,7 @@ class Avatar:
 		self.forward(self.vf) # Animate forwards
 
 		self.armRot.z += self.darmRot*dt
-		self.darmRot *= (-1) * (abs(self.armRot.z) > 15)
+		self.darmRot *= 1 - 2*(abs(self.armRot.z) > 15)
 
 
 	def renderPart(self, part, angle, pivot, vector):
@@ -209,7 +216,8 @@ class Avatar:
 		self.renderPart('arm2', -self.armRot.z, (-0.317, 1.76, 0), (0, 0, 1)) # Draw second arm
 
 		for part in ('head1', 'eye1', 'eye2', 'mouth1', 'nose1', 'hat1'):
-			self.renderPart(part, self.armRot.z, (0.0, 0.0, 0.0), (0, 1, 0))
+			self.renderPart(part, self.headR.y, (0.0, 0.0, 0.0), (0, 1, 0))
+			# self.renderPart(part, self.armRot.z, (0.0, 0.0, 0.0), (0, 1, 0))
 
 		# Undo transformations
 		self.applyTransformations(undo=True)
@@ -240,6 +248,7 @@ class Avatar:
 		'''
 
 		for key, val in kwargs.items():
+			# print('Setting {key} to {val}.'.format(key=key, val=val))
 			setattr(self, key, val)
 
 
@@ -303,61 +312,6 @@ def createGrid():
 
 
 
-class Widget:
-
-	'''
-	OpenGL widgets
-
-	'''
-
-	def __init__(self, box, command):
-		
-		'''
-		Docstring goes here
-
-		'''
-
-		self.box = box
-		self.command = command
-		self.pressed = False # self.state
-
-		self.vPressed 	= OBJ('data/buttonP.obj')
-		self.vReleased 	= OBJ('data/buttonR.obj')
-		self.active = self.vPressed if self.pressed else self.vReleased
-
-
-	def pressIf(self, x, y):
-		if self.box.within(x, y):
-			self.press()
-
-
-	def press(self):
-		self.pressed = True
-		self.active = self.vPressed
-		self.command() # TODO: Generate event instead (?)
-
-
-	def release(self):
-		self.pressed = True
-		self.active = self.vReleased
-
-
-	def render(self):
-
-		width, height = (int(720*2), int(480*2)) # TODO: Make more robust
-		
-		sx = self.box.width()*1/width
-		sy = self.box.height()*1/height
-		
-		# print(self.box.width(), self.box.height())
-		
-		glLoadIdentity() # Don't apply camera transformations
-		glScale(sx, sy, sx)
-		glTranslate(-1.5/sx, 1.0/sy, -1.1/sx)
-		glCallList(self.active.gl_list)
-
-
-
 def bindEvents():
 
 	'''
@@ -371,9 +325,13 @@ def bindEvents():
 	grid 		= createGrid()
 	dispatcher 	= EventDispatcher()
 
+	blocks = createBuffers('data/minecraft.obj', groups=True)
+	rook   = createBuffers('C:/Users/Jonatan/Dropbox/Jon & Jay/Blender/Queen.obj')
+
 	scales = [[1+randint(0, 20)*0.05 for y in range(20)] for x in range(10)]
 	# button = Widget(Rect(10, 10, 150, 80), lambda: None)
 
+	path = ((x/10, 0.0, sin(x/10)) for x in count(0, 1)) # 
 
 	def AvatarMain(event):
 
@@ -383,11 +341,10 @@ def bindEvents():
 
 		'''
 
-		# print('Pos: ', avatar.pos)
 		# TODO: Keep FPS in check
 
-		glEnable (GL_BLEND);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		camera.animate()
 		avatar.animate(1.0) # TODO: Determine dt
@@ -402,6 +359,24 @@ def bindEvents():
 		camera.apply()
 
 		glCallList(grid)
+
+		# TODO: Fix texture bug (all blocks are transparent)
+		# Grid transparency seems to affect subsequent rendering
+		glColor(1.0, 1.0, 1.0, 1.0)
+		glTranslate(4.0, 1.0, 4.0)
+		glCallList(blocks['cobblestone1'])
+		# glTranslate(-2.0, 0.0, 0.0)
+		glCallList(blocks['smooth_sandstone1'])
+		# glTranslate(0.0, 0.0, -2.0)
+		glCallList(blocks['spruce_log1'])
+		# glTranslate(2.0, 0.0, 0.0)
+		glCallList(blocks['dirt1'])
+		# glTranslate(0.0, -1.0, 2.0)
+		glTranslate(-4.0, -1.0, -4.0)
+
+		nextpos = next(path)
+		glTranslate(*nextpos)
+		avatar.set(rot=Point(y=degrees(atan(sin(nextpos[0])))))
 
 		for i in range(10):
 			glTranslate(2.2, 0.0, 0.0)
@@ -425,43 +400,43 @@ def bindEvents():
 		# dispatcher.bind({'type': MOUSEBUTTONUP, 'button': 1}, lambda event: button.release())
 
 		for pattern, handler in (
-			#
 			# ({'type': MOUSEMOTION, 'also': (K_RSHIFT,)}, lambda event: camera.set(ry=camera.ry+event.rel[0], rx=camera.rx+event.rel[1])),
-			({'type': MOUSEMOTION}, lambda event: camera.set(ry=camera.ry+event.rel[0]*pygame.mouse.get_pressed()[0], rx=camera.rx+event.rel[1]*pygame.mouse.get_pressed()[0])),
-			({'type': KEYDOWN, 'key': K_LEFT}, lambda event: avatar.set(ω=Point(y= 5))),
-			({'type': KEYDOWN, 'key': K_RIGHT}, lambda event: avatar.set(ω=Point(y=-5))),
-			({'type': KEYUP, 'key': K_LEFT}, lambda event: avatar.set(ω=Point(y= 0))),
-			({'type': KEYUP, 'key': K_RIGHT}, lambda event: avatar.set(ω=Point(y= 0))),
+			({'type': MOUSEMOTION}, lambda pt, event: camera.set(ry=camera.ry+event.rel[0]*pygame.mouse.get_pressed()[0], rx=camera.rx+event.rel[1]*pygame.mouse.get_pressed()[0])),
+			({'type': MOUSEMOTION, 'also': (K_RSHIFT,)}, lambda pt, event: camera.set(tx=camera.tx+event.rel[0]*0.2, tz=camera.tz+event.rel[1]*0.2)), # TODO: 
+			({'type': KEYDOWN, 'key': K_LEFT}, lambda pt, event: avatar.set(ω=Point(y= 5))),
+			({'type': KEYDOWN, 'key': K_RIGHT}, lambda pt, event: avatar.set(ω=Point(y=-5))),
+			({'type': KEYUP, 'key': K_LEFT}, lambda pt, event: avatar.set(ω=Point(y= 0))),
+			({'type': KEYUP, 'key': K_RIGHT}, lambda pt, event: avatar.set(ω=Point(y= 0))),
 
 			#
-			({'type': KEYDOWN, 'key': K_UP, 'mod': 0}, lambda event: avatar.set(vf= 0.05)),
-			({'type': KEYDOWN, 'key': K_UP, 'mod': 2}, lambda event: avatar.set(vf= 0.1)),
-			({'type': KEYDOWN, 'key': K_DOWN}, lambda event: avatar.set(vf=-0.05)),
-			({'type': KEYUP, 'key': K_UP}, lambda event: avatar.set(vf= 0)),
-			({'type': KEYUP, 'key': K_DOWN}, lambda event: avatar.set(vf= 0)),
+			({'type': KEYDOWN, 'key': K_UP, 'mod': 0}, lambda pt, event: avatar.set(vf= 0.05)),
+			({'type': KEYDOWN, 'key': K_UP, 'mod': 2}, lambda pt, event: avatar.set(vf= 0.1)),
+			({'type': KEYDOWN, 'key': K_DOWN}, lambda pt, event: avatar.set(vf=-0.05)),
+			({'type': KEYUP, 'key': K_UP}, lambda pt, event: avatar.set(vf= 0)),
+			({'type': KEYUP, 'key': K_DOWN}, lambda pt, event: avatar.set(vf= 0)),
 
-			({'type': KEYDOWN, 'key': K_SPACE}, lambda event: avatar.set(v=Point(y=0.1))),
-			({'type': KEYUP, 'key': K_SPACE}, lambda event: avatar.set(v=Point(y=-0.1)))):
+			# ({'type': KEYDOWN, 'key': K_SPACE}, lambda pt, event: avatar.set(v=Point(y=0.1))),
+			# ({'type': KEYUP, 'key': K_SPACE}, lambda pt, event: avatar.set(v=Point(y=-0.1))),
+			({'type': MOUSEMOTION, 'also': (K_RCTRL,)}, lambda pt, event: avatar.set(headR=Point(y=(avatar.headR.y+event.rel[0]*90/720))))):
 			dispatcher.bind(pattern, handler)
-
 
 	def bindEvents():
 
 		# NOTE: K_w is not the scancode for 'w'
 		w, a, s, d = 17, 30, 31, 32
 
-		dispatcher.bind({'type': KEYDOWN, 'unicode': 'w'}, 	lambda event: camera.set(dtz=4, translating=True))
-		dispatcher.bind({'type': KEYDOWN, 'unicode': 'a'}, 	lambda event: camera.set(dry=5, rotating=True))
-		dispatcher.bind({'type': KEYDOWN, 'unicode': 's'}, 	lambda event: camera.set(dtz=-4, translating=True))
-		dispatcher.bind({'type': KEYDOWN, 'unicode': 'd'}, 	lambda event: camera.set(dry=-5, rotating=True))
+		dispatcher.bind({'type': KEYDOWN, 'unicode': 'w'}, 	lambda pt, event: camera.set(dtz=4, translating=True))
+		dispatcher.bind({'type': KEYDOWN, 'unicode': 'a'}, 	lambda pt, event: camera.set(dry=5, rotating=True))
+		dispatcher.bind({'type': KEYDOWN, 'unicode': 's'}, 	lambda pt, event: camera.set(dtz=-4, translating=True))
+		dispatcher.bind({'type': KEYDOWN, 'unicode': 'd'}, 	lambda pt, event: camera.set(dry=-5, rotating=True))
 
-		dispatcher.bind({'type': KEYUP, 'scancode': w}, lambda event: camera.setTranslating(False))
-		dispatcher.bind({'type': KEYUP, 'scancode': a}, lambda event: camera.setRotating(False))
-		dispatcher.bind({'type': KEYUP, 'scancode': s}, lambda event: camera.setTranslating(False))
-		dispatcher.bind({'type': KEYUP, 'scancode': d}, lambda event: camera.setRotating(False))
+		dispatcher.bind({'type': KEYUP, 'scancode': w}, lambda pt, event: camera.setTranslating(False))
+		dispatcher.bind({'type': KEYUP, 'scancode': a}, lambda pt, event: camera.setRotating(False))
+		dispatcher.bind({'type': KEYUP, 'scancode': s}, lambda pt, event: camera.setTranslating(False))
+		dispatcher.bind({'type': KEYUP, 'scancode': d}, lambda pt, event: camera.setRotating(False))
 
-		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 4}, lambda event: camera.setTranslation(z=camera.tz+1.2))
-		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 5}, lambda event: camera.setTranslation(z=camera.tz-1.2))
+		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 4}, lambda pt, event: camera.setTranslation(z=camera.tz+1.2))
+		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 5}, lambda pt, event: camera.setTranslation(z=camera.tz-1.2))
 
 	dispatcher.always = AvatarMain
 	bindAvatarEvents()

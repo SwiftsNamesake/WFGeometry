@@ -76,6 +76,7 @@ class Camera:
 
 		'''
 
+		# TODO: Decide in which order the transformations should be applied
 		glTranslate(self.tx, self.ty, self.tz)
 		glRotate(self.rx, 1, 0, 0)
 		glRotate(self.ry, 0, 1, 0)

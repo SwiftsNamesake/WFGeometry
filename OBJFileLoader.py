@@ -56,6 +56,11 @@ def MTL(filename):
 
 	'''
 
+	# TODO: Spec compliance
+	# TODO: Blender compliance (Ns, Ni, illum)
+
+	# TODO: Handle input file properly (close handle)
+
 	contents 	= {}							# 
 	mtl 	 	= None							# 
 	path 		= dirname(abspath(filename)) 	# 

@@ -162,3 +162,113 @@ class Rect:
 
 	def within(self, x, y):
 		return (self.left <= x <= self.right) and (self.top <= y <= self.bottom)
+
+
+
+def plot(f, domain, resolution, scale):
+	
+	'''
+	Plots a mathematical function in 3D space
+
+	'''
+
+	# TODO: Options, complex numbers, 3D plots, plot lines
+
+	pass
+
+
+
+def visualize(vector):
+
+	'''
+	Docstring goes here
+
+	'''
+
+	pass
+
+
+class Vector(object):
+
+	'''
+	Docstring goes here.
+
+	'''
+
+	# TODO: Numpy, matrix operations, performance
+	# TODO: Magic method helpers
+	# TODO: __slots__
+	# TODO: Sigma value to prevent floating-point errors (?)
+
+	# type = float
+
+	def __init__(self, x=0, y=0, z=0):
+		
+		'''
+		Docstring goes here.
+
+		'''
+
+		self.x = x
+		self.y = y
+		self.z = z
+
+
+	def __repr__(self):
+		pass
+
+
+	def __str__(self):
+		pass
+
+
+	def __eq__(self, other):
+		
+		'''
+		Docstring goes here
+
+		'''
+
+		# TODO: Sigma value to prevent floating-point errors (?)
+		return (self.x == other.x) and (self.y == other.y) and (self.z == other.z)
+
+
+	def __add__(self, other):
+
+		'''
+		Docstring goes here
+
+		'''
+
+		# super(self)
+		return Vector(self.x + other.x, self.y + other.y, self.z + other.z)
+
+
+	def __sub__(self, other):
+
+		'''
+		Docstring goes here
+
+		'''
+
+		return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
+
+
+	def __abs__(self):
+		
+		'''
+		Docstring goes here
+
+		'''
+
+		return None
+
+
+	def __mul__(self):
+		
+		'''
+		Docstring goes here
+
+		'''
+
+		return None

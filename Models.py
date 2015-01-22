@@ -15,6 +15,7 @@
 #        - Reference official specs, describe formats, ensure correctness
 #        - Optimize, comment, refactor
 #        - Use optional logger (cf. SwiftUtils.)
+#        - Instancing
 #
 # SPEC | - Exports a Model class and parsers for Wavefront MTL and OBJ files
 #        - SI units by default
@@ -29,7 +30,8 @@ from SwiftUtils.SwiftUtils import Logger
 # from itertools
 
 
-logger = Logger()
+logger = Logger('Models.py')
+
 
 def parseMTL(filename):
 
@@ -38,9 +40,12 @@ def parseMTL(filename):
 
 	'''
 
+	# TODO: Spec compliance
+	# TODO: Blender compliance (MTL properties: Ns, Ni, d, illum)
+
 	#raise NotImplementedError('Walk along. Nothing to see here.')
 
-	logger.log('parseMTL', 'Parsing MTL file: %s\n' % filename, kind='log')
+	logger.log('Parsing MTL file: %s\n' % filename, kind='log')
 	
 	materials = {} 				# TODO: Dict comprehension, itertools, split on "newmtl" (?)
 	current = None 				# Name of the current material
@@ -64,6 +69,8 @@ def parseMTL(filename):
 			# New material definition
 			current = values[1]
 			materials[current] = {}
+		elif values[0] in ('Ns', 'Ni', 'd', 'illum'):
+			logger.log('The valid MTL property \'{0}\' is currently unsupported by this parser and will have no effect.'.format(values[0]))
 		else:
 			# Unknown parameter encountered
 			raise ValueError('\'{0}\' is not a recognised parameter.'.format(values[0]))
@@ -84,9 +91,14 @@ def parseOBJ(filename):
 	# TODO: Handle multiple groups properly (eg. g group1 group2 group3)
 	# TODO: Handle convex polygons correctly
 
+	# TODO: Handle 'off' instruction
+
+	# TODO: Spec compliance
+	# TODO: Blender compliance
+
 	#raise NotImplementedError('Walk along. Nothing to see here.')
 
-	logger.log('parseMTL', 'Parsing OBJ file: %s\n' % filename, kind='log')
+	logger.log('Parsing OBJ file: %s\n' % filename, kind='log')
 
 	data 	= defaultdict(list)	#
 	path 	= parent(filename) 	# Path to containing folder
@@ -111,11 +123,18 @@ def parseOBJ(filename):
 			# Face
 			# TODO: Save indices instead (would probably save memory) (?)
 			# TODO: Refactor (?)
-			face = [vertex.split('/') for vertex in values[1:]] # Extract indices for each vertex of the face
-			data['faces'].append(([data['vertices'][int(vertex[0])-1] for vertex in face], 								 # Vertices
-								  [data['textures'][int(vertex[1])-1] for vertex in face] if face[0][1] != '' else None, # Texture coordinates
-								  [data['normals'][int(vertex[2])-1]  for vertex in face] if face[0][2] != '' else None, # Normals
-								   data['material'])) 																	 # Material
+			# TODO: Handle absent values for normals and texture coords
+			# TODO: Handle vertex definitions of varying length (eg. 50/2/1 55/2 60)
+			try:
+				face = [vertex.split('/') for vertex in values[1:]] # Extract indices for each vertex of the face
+				assert all(len(vertex) == len(face[0]) for vertex in face)
+				data['faces'].append(([data['vertices'][int(vertex[0])-1] for vertex in face], 								 # Vertices
+									  [data['textures'][int(vertex[1])-1] for vertex in face] if len(face[0])>1 else None,   # Texture coordinates
+									  [data['normals'][int(vertex[2])-1]  for vertex in face] if len(face[0])>2 else None,   # Normals
+									   data['material'])) 																	 # Material
+			except IndexError:
+				logger.log('Face definition could not be parsed: {0}'.format(face))
+				raise IndexError
 
 		elif values[0] == 'g':
 			# Group
@@ -144,8 +163,8 @@ def parseOBJ(filename):
 			# Unknown parameter encountered
 			raise ValueError('\'{0}\' is not a recognised parameter.'.format(values[0]))
 
-	assert data['groups'][0][1] == 0, 'All faces must belong to a group. (lowest index is {0})'.format(data['groups'][0][1])
 	print('Groups', data['groups'])
+	assert data['groups'][0][1] == 0, 'All faces must belong to a group. (lowest index is {0})'.format(data['groups'][0][1])
 	# Map group names to their lower and upper bounds
 	data['groups'] = { group : (low, upp) for (group, low), (_, upp) in zip(data['groups'], data['groups'][1:]+[(None, len(data['faces']))])}
 	print('Groups', data['groups'])
@@ -179,6 +198,7 @@ def createBuffer(faces, data):
 		if (texcoords is not None) and ('map_Kd' in material):
 			glEnable(GL_TEXTURE_2D)
 			glBindTexture(GL_TEXTURE_2D, material['map_Kd']) # Use diffuse texture map if available
+			# glColor(material['Ka']) # Use diffuse colour
 		else:
 			glDisable(GL_TEXTURE_2D)
 			glColor(material['Kd']) # Use diffuse colour
@@ -259,9 +279,6 @@ def main():
 	from WFGeometry import InitGL
 	
 	hombre = createBuffers('data/hombre#2.obj', groups=False)
-	# groups = createBuffers('data/hombre.obj', groups=False)
-
-	# print(groups)
 
 
 
