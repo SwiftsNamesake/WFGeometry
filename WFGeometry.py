@@ -326,7 +326,8 @@ def bindEvents():
 	dispatcher 	= EventDispatcher()
 
 	blocks = createBuffers('data/minecraft.obj', groups=True)
-	rook   = createBuffers('C:/Users/Jonatan/Dropbox/Jon & Jay/Blender/Queen.obj')
+	pieces = { piece : createBuffers('C:/Users/Jonatan/Dropbox/Jon & Jay/Blender/{0}.obj'.format(piece), groups=False)['model'] for piece in ('king', 'Queen', 'Pawn', 'Rook')}
+	# queen  = createBuffers('C:/Users/Jonatan/Dropbox/Jon & Jay/Blender/Queen.obj', groups=False)
 
 	scales = [[1+randint(0, 20)*0.05 for y in range(20)] for x in range(10)]
 	# button = Widget(Rect(10, 10, 150, 80), lambda: None)
@@ -373,6 +374,11 @@ def bindEvents():
 		glCallList(blocks['dirt1'])
 		# glTranslate(0.0, -1.0, 2.0)
 		glTranslate(-4.0, -1.0, -4.0)
+
+		for n, piece in enumerate(('king', 'Queen', 'Pawn', 'Rook')):
+			glTranslate(0.0, 0.0, n*5)
+			glCallList(pieces[piece])
+
 
 		nextpos = next(path)
 		glTranslate(*nextpos)

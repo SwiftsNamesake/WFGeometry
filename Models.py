@@ -16,9 +16,12 @@
 #        - Optimize, comment, refactor
 #        - Use optional logger (cf. SwiftUtils.)
 #        - Instancing
+#        - Include OBJ and MTL specs
 #
 # SPEC | - Exports a Model class and parsers for Wavefront MTL and OBJ files
 #        - SI units by default
+#        - https://en.wikipedia.org/wiki/Wavefront_.obj_file
+#        - http://paulbourke.net/dataformats/mtl/
 
 
 
@@ -30,7 +33,9 @@ from SwiftUtils.SwiftUtils import Logger
 # from itertools
 
 
+
 logger = Logger('Models.py')
+
 
 
 def parseMTL(filename):
@@ -42,6 +47,19 @@ def parseMTL(filename):
 
 	# TODO: Spec compliance
 	# TODO: Blender compliance (MTL properties: Ns, Ni, d, illum)
+
+	# From Wikipedia:
+	# 0. Color on and Ambient off
+	# 1. Color on and Ambient on
+	# 2. Highlight on
+	# 3. Reflection on and Ray trace on
+	# 4. Transparency: Glass on, Reflection: Ray trace on
+	# 5. Reflection: Fresnel on and Ray trace on
+	# 6. Transparency: Refraction on, Reflection: Fresnel off and Ray trace on
+	# 7. Transparency: Refraction on, Reflection: Fresnel on and Ray trace on
+	# 8. Reflection on and Ray trace off
+	# 9. Transparency: Glass on, Reflection: Ray trace off
+	# 10. Casts shadows onto invisible surfaces
 
 	#raise NotImplementedError('Walk along. Nothing to see here.')
 
@@ -69,7 +87,9 @@ def parseMTL(filename):
 			# New material definition
 			current = values[1]
 			materials[current] = {}
-		elif values[0] in ('Ns', 'Ni', 'd', 'illum'):
+		elif values[0] in ('Ns', 'Ni', 'd', 'Tr', 'illum'):
+			# ?, ?, d(issolved), Tr(ansparent), ?
+			# Dissolved and Transparent are synonyms
 			logger.log('The valid MTL property \'{0}\' is currently unsupported by this parser and will have no effect.'.format(values[0]))
 		else:
 			# Unknown parameter encountered
@@ -125,16 +145,14 @@ def parseOBJ(filename):
 			# TODO: Refactor (?)
 			# TODO: Handle absent values for normals and texture coords
 			# TODO: Handle vertex definitions of varying length (eg. 50/2/1 55/2 60)
-			try:
-				face = [vertex.split('/') for vertex in values[1:]] # Extract indices for each vertex of the face
-				assert all(len(vertex) == len(face[0]) for vertex in face)
-				data['faces'].append(([data['vertices'][int(vertex[0])-1] for vertex in face], 								 # Vertices
-									  [data['textures'][int(vertex[1])-1] for vertex in face] if len(face[0])>1 else None,   # Texture coordinates
-									  [data['normals'][int(vertex[2])-1]  for vertex in face] if len(face[0])>2 else None,   # Normals
-									   data['material'])) 																	 # Material
-			except IndexError:
-				logger.log('Face definition could not be parsed: {0}'.format(face))
-				raise IndexError
+			face = [vertex.split('/') for vertex in values[1:]] # Extract indices for each vertex of the face
+			assert all(len(vertex) == len(face[0]) for vertex in face)
+			# data['faces'].append(data[key][int(vertex[index]-1)] for index, attr in enumerate(('vertices', 'textures', 'normals') if len(face[0])>index) else None)
+			# data['faces'].append(data['material'])
+			data['faces'].append(([data['vertices'][int(vertex[0])-1] for vertex in face], 								 # Vertices
+								  [data['textures'][int(vertex[1])-1] for vertex in face] if len(face[0])>1 else None,   # Texture coordinates
+								  [data['normals'][int(vertex[2])-1]  for vertex in face] if len(face[0])>2 else None,   # Normals
+								   data['material'])) 																	 # Material
 
 		elif values[0] == 'g':
 			# Group
@@ -143,10 +161,12 @@ def parseOBJ(filename):
 
 		elif values[0] == 'o':
 			# Object
+			logger.log('Ignoring OBJ property \'{0}\''.format(values[0]))
 			pass
 
 		elif values[0] == 's':
 			# Smooth shading
+			logger.log('Ignoring OBJ property \'{0}\''.format(values[0]))
 			pass
 
 		elif values[0] == 'mtllib':
@@ -159,13 +179,18 @@ def parseOBJ(filename):
 			# TODO: Handle usemtl (null)
 			data['material'] = data['mtl'][values[1]] # Current material
 
+		elif values[0] in ('l'):
+			logger.log('Unsure how to handle property \'{0}\'.'.format(values[0]))
+			pass
 		else:
 			# Unknown parameter encountered
 			raise ValueError('\'{0}\' is not a recognised parameter.'.format(values[0]))
 
+	# TODO: Handle data with no group definitions
 	print('Groups', data['groups'])
-	assert data['groups'][0][1] == 0, 'All faces must belong to a group. (lowest index is {0})'.format(data['groups'][0][1])
+	assert len(data['groups']) == 0 or data['groups'][0][1] == 0, 'All faces must belong to a group. (lowest index is {0})'.format(data['groups'][0][1])
 	# Map group names to their lower and upper bounds
+	# TODO: Refactor (or atleast explain) this line
 	data['groups'] = { group : (low, upp) for (group, low), (_, upp) in zip(data['groups'], data['groups'][1:]+[(None, len(data['faces']))])}
 	print('Groups', data['groups'])
 	return data
