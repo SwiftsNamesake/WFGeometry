@@ -17,7 +17,8 @@
 #        - Use optional logger (cf. SwiftUtils.)
 #        - Instancing
 #        - Include OBJ and MTL specs
-#
+#        - Metadata (eg. coordinate extrema, etc.)
+
 # SPEC | - Exports a Model class and parsers for Wavefront MTL and OBJ files
 #        - SI units by default
 #        - https://en.wikipedia.org/wiki/Wavefront_.obj_file
@@ -80,17 +81,21 @@ def parseMTL(filename):
 			# Ambient, Diffuse and Specular
 			# TODO: Convert to tuple (?)
 			materials[current][values[0]] = [float(ch) for ch in values[1:]] # (R, G, B, A) channels
+
 		elif values[0] == 'map_Kd':
 			# Texture
 			materials[current][values[0]] = loadTexture(join(path, values[1]))
+
 		elif values[0] == 'newmtl':
 			# New material definition
 			current = values[1]
 			materials[current] = {}
+
 		elif values[0] in ('Ns', 'Ni', 'd', 'Tr', 'illum'):
 			# ?, ?, d(issolved), Tr(ansparent), ?
 			# Dissolved and Transparent are synonyms
 			logger.log('The valid MTL property \'{0}\' is currently unsupported by this parser and will have no effect.'.format(values[0]))
+			
 		else:
 			# Unknown parameter encountered
 			raise ValueError('\'{0}\' is not a recognised parameter.'.format(values[0]))

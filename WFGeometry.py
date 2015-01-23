@@ -64,7 +64,7 @@ def InitGL():
 	pygame.init()
 
 	pygame.display.set_caption('Los Hombres con sombreros')
-	pygame.display.set_icon(pygame.image.load('C:/Users/Jonatan/Desktop/Python/resources/images/paintings/mont-sainte-victoire-3.jpg'))
+	# pygame.display.set_icon(pygame.image.load('C:/Users/Jonatan/Desktop/Python/resources/images/paintings/mont-sainte-victoire-3.jpg'))
 
 	viewport = (int(720*2), int(480*2))
 	hx = viewport[0]/2
@@ -344,8 +344,8 @@ def bindEvents():
 
 		# TODO: Keep FPS in check
 
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_BLEND)
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
 		camera.animate()
 		avatar.animate(1.0) # TODO: Determine dt
