@@ -21,7 +21,7 @@ from utilities import Point
 
 
 @addLogger
-class Camera:
+class Camera(object):
 
 	'''
 	Animation data
@@ -64,7 +64,7 @@ class Camera:
 		'''
 
 		attr = getattr(self, attr) 
-		attr += Point(x or attr.x, y or attr.y, z or attr.z)
+		attr += Point(x or 0, y or 0, z or 0)
 
 
 	def rotate(self, x=None, y=None, z=None):
@@ -135,11 +135,11 @@ class Camera:
 
 
 	def setRotating(self, rotating):
-		self.set(rotating=rotating)
+		self.rotating = rotating
 
 
 	def setTranslating(self, translating):
-		self.set(translating=translating)
+		self.translating = translating
 
 
 	def apply(self):

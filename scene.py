@@ -7,7 +7,7 @@
 #
 
 # TODO | - Managing a matrix stack and 'connected' meshes
-#        -
+#        - Should scenes manage events, contexts or windows, or simply encapsulate geometry data?
 #
 # SPEC | -
 #        -
@@ -16,6 +16,13 @@
 
 import camera
 import model
+
+import pygame
+
+from OpenGL.GL import *
+from OpenGL.GLU import *
+
+
 
 class Scene(object):
 
@@ -36,7 +43,6 @@ class Scene(object):
 		self.meshes = [] # TODO: Mesh queries
 
 
-
 	def render(self):
 
 		'''
@@ -49,6 +55,18 @@ class Scene(object):
 
 		for mesh in self.meshes:
 			mesh.render()
+
+		pygame.display.flip()
+
+
+	def add(self, mesh):
+		
+		'''
+		Add a mesh object to the scene
+
+		'''
+
+		self.meshes.append(mesh)
 
 
 	def prepare(self):
@@ -70,10 +88,10 @@ class Scene(object):
 		glLoadIdentity()
 
 
-	def animate(self):
+	def animate(self, dt):
 
 		'''
-		Docstring goes here
+		Animates the camera and each mesh belonging to the scene
 
 		'''
 
@@ -81,3 +99,19 @@ class Scene(object):
 
 		for mesh in self.meshes:
 			mesh.animate()
+
+
+
+def main():
+	
+	'''
+	Docstring goes here
+
+	'''
+
+	pass
+
+
+
+if __name__ == '__main__':
+	main()

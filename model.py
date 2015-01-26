@@ -6,15 +6,19 @@
 # January 25 2015
 #
 
-# TODO | -
-#        -
+# TODO | - Manipulating and interacting with vertices
+#        - Queries, intersections, etc.
 #
 # SPEC | -
 #        -
 
 
 
-import models
+from utilities import Point
+from models import parseOBJ, createBuffers
+
+from OpenGL.GL import *
+from OpenGL.GLU import *
 
 
 class Model(object):
@@ -31,6 +35,11 @@ class Model(object):
 
 		'''
 
+		#
+		self.pos = Point(*origin)
+		self.rot = Point(0, 0, 0)
+
+		#
 		self.vertices = parseOBJ(filename)
 		self.buffers  = createBuffers(data=self.vertices, groups=groups)
 		self.dirty    = False # Dirty vertices flag
@@ -43,9 +52,25 @@ class Model(object):
 
 		'''
 
-		# Apply model view transforms
-		# Render
-		glCallList(self.buffer)
+		self.apply() 			# Apply model view transforms
+
+		# Order is not guaranteed
+		for group, buff in self.buffers.items():
+			glCallList(buff) # Render
+
+
+	def apply(self):
+		
+		'''
+		Apply matrix transformations
+		
+		'''
+
+		# TODO: Decide in which order the transformations should be applied
+		glTranslate(*self.pos)
+		glRotate(self.rot.x, 1, 0, 0)
+		glRotate(self.rot.y, 0, 1, 0)
+		glRotate(self.rot.z, 0, 0, 1)
 
 
 	def animate(self, dt):

@@ -409,7 +409,7 @@ def bindEvents():
 		for pattern, handler in (
 			# ({'type': MOUSEMOTION, 'also': (K_RSHIFT,)}, lambda event: camera.set(ry=camera.ry+event.rel[0], rx=camera.rx+event.rel[1])),
 			({'type': MOUSEMOTION}, lambda pt, event: camera.rotate(y=event.rel[0]*pygame.mouse.get_pressed()[0], x=event.rel[1]*pygame.mouse.get_pressed()[0])),
-			({'type': MOUSEMOTION, 'also': (K_RSHIFT,)}, lambda pt, event: camera.translate(tx=event.rel[0]*0.2, tz=event.rel[1]*0.2)), # TODO: 
+			({'type': MOUSEMOTION, 'also': (K_RSHIFT,)}, lambda pt, event: camera.translate(x=event.rel[0]*0.2, z=event.rel[1]*0.2)), # TODO: 
 			# ({'type': KEYDOWN, 'key': K_LEFT}, lambda pt, event: avatar.set(ω=Point(y= 5))),
 			# ({'type': KEYDOWN, 'key': K_RIGHT}, lambda pt, event: avatar.set(ω=Point(y=-5))),
 			# ({'type': KEYUP, 'key': K_LEFT}, lambda pt, event: avatar.set(ω=Point(y= 0))),
