@@ -16,6 +16,7 @@
 
 from OpenGL.GL import *
 from SwiftUtils import Console, addLogger
+from utilities import Point
 
 
 
@@ -28,6 +29,11 @@ class Camera:
 	'''
 	
 	def __init__(self):
+
+		# self.pos = Point(0, 0, 0) # Translation
+		# self.rot = Point(0, 0, 0) # Rotation
+		# self.v   = Point(0, 0, 0) # Velocity 
+		# self.ω   = Point(0, 0, 0) # Angular velocity
 
 		self.rx, self.ry, self.rz 		= 0, 0, 0 # Rotation
 		self.tx, self.ty, self.tz 		= 0, 0, 0 # Translation

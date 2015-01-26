@@ -251,7 +251,7 @@ def createBuffer(faces, data):
 
 
 
-def createBuffers(filename, groups=True):
+def createBuffers(filename=None, data=None, groups=True):
 	
 	'''
 	Creates OpenGL buffers (one per group unless groups are disabled)
@@ -262,40 +262,16 @@ def createBuffers(filename, groups=True):
 	# TODO: Should a dictionary be returned even when groups is False (?)
 	#raise NotImplementedError('Leave me alone. I\'m not ready yet')
 
-	data = parseOBJ(filename)
+	if filename == data == None:
+		raise ValueError('Must supply either a filename or geometry data.') # TODO: Wording
+
+	if data == None:
+		data = parseOBJ(filename)
 
 	if not groups:
 		return {'model': createBuffer(data['faces'], data)}
 	else:
 		return { group : createBuffer(data['faces'][lower:upper], data) for group, (lower, upper) in data['groups'].items()}
-
-
-
-class Model(object):
-
-	'''
-	Wraps an OpenGL buffer
-
-	'''
-
-	def __init__(self, filename, origin=(0,0,0)):
-		
-		'''
-		Docstring goes here
-
-		'''
-
-		pass
-
-
-	def render(self):
-		
-		'''
-		Docstring goes here
-
-		'''
-
-		pass
 
 
 

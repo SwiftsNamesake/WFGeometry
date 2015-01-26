@@ -18,6 +18,7 @@ from pygame import image 					# ...
 from contextlib import contextmanager 		# ...
 from os.path import abspath, join, dirname 	# ...
 from OpenGL.GL import *						# ...
+from math import sqrt
 
 
 
@@ -122,11 +123,47 @@ class Point:
 	
 	#Point = namedtuple('Point', 'x y z')
 	# TODO: Extract Point definition (or find pre-existing)
+	# TODO: Optimise (cf __slots__)
 
 	def __init__(self, x=0, y=0, z=0):
 		self.x = x
 		self.y = y
 		self.z = z
+
+
+	def euclidean(self, other):
+
+		'''
+		Euclidean distance between two points (dot-product)
+
+		'''
+
+		return sqrt((other.x-self.x)**2 + (other.y-self.y)**2 + (other.z-self.z)**2)
+
+
+	def rotate(self, x, y, z):
+
+		'''
+		Rotation
+
+		'''
+
+		raise NotImplementedError
+
+		
+	def __mult__(self, other):
+
+		'''
+		Scalar multiplication
+
+		'''
+
+		# TODO: Optimise, separate scalar and vector multiplication
+		# TODO: Find proper mathematical terms
+		# TODO: Correctness
+
+		return Point(self.x*other, self.y*other, self.z*other)
+
 
 	def __str__(self):
 		return 'Point(x=%f, y=%f, z=%f)' % (self.x, self.y, self.z)

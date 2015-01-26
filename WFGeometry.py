@@ -35,7 +35,8 @@ from math import sin, cos, radians, atan, degrees	#
 from random import choice, random, randint 			# 
 
 from SwiftUtils.EventDispatcher import EventDispatcher
-from camera import Camera
+# from camera import Camera
+import camera as cam
 from utilities import Point, Rect, glDraw
 
 from itertools import count, cycle
@@ -118,7 +119,7 @@ class Avatar:
 		self.pos = Point(x, y, z)		# Meters
 		self.rot = Point(rx, ry, rz)	# Degrees
 
-		self.v = Point(dx, dy, dz)		# Meters per second
+		self.v = Point(dx, dy, dz)		# Metres per second
 		self.ω = Point(drx, dry, drz)	# Degrees per second
 
 		self.vf = 0 #  Forward velocity
@@ -320,7 +321,7 @@ def bindEvents():
 	'''
 
 	models 		= InitGL()
-	camera 		= Camera()
+	camera 		= cam.Camera()
 	avatar 		= Avatar(models, x=2.0, z=-2.0)
 	grid 		= createGrid()
 	dispatcher 	= EventDispatcher()
