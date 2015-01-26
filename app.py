@@ -105,7 +105,7 @@ class App(object):
 		'''
 
 		for n, piece in enumerate(('king', 'Queen', 'Pawn', 'Rook')):
-			self.scene.add(Model(filename='C:/Users/Jonatan/Dropbox/Jon & Jay/Blender/{0}.obj'.format(piece), groups=False, origin=(8.5*n, 0.0, 0.0)))
+			self.scene.add(Model(filename='data/{0}.obj'.format(piece), groups=False, origin=(8.5*n, 0.0, 0.0))) # TODO: Managing resources and paths
 
 
 	def OpenGL(self, width, height):
