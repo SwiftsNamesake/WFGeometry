@@ -408,23 +408,24 @@ def bindEvents():
 
 		for pattern, handler in (
 			# ({'type': MOUSEMOTION, 'also': (K_RSHIFT,)}, lambda event: camera.set(ry=camera.ry+event.rel[0], rx=camera.rx+event.rel[1])),
-			({'type': MOUSEMOTION}, lambda pt, event: camera.set(ry=camera.ry+event.rel[0]*pygame.mouse.get_pressed()[0], rx=camera.rx+event.rel[1]*pygame.mouse.get_pressed()[0])),
-			({'type': MOUSEMOTION, 'also': (K_RSHIFT,)}, lambda pt, event: camera.set(tx=camera.tx+event.rel[0]*0.2, tz=camera.tz+event.rel[1]*0.2)), # TODO: 
-			({'type': KEYDOWN, 'key': K_LEFT}, lambda pt, event: avatar.set(ω=Point(y= 5))),
-			({'type': KEYDOWN, 'key': K_RIGHT}, lambda pt, event: avatar.set(ω=Point(y=-5))),
-			({'type': KEYUP, 'key': K_LEFT}, lambda pt, event: avatar.set(ω=Point(y= 0))),
-			({'type': KEYUP, 'key': K_RIGHT}, lambda pt, event: avatar.set(ω=Point(y= 0))),
+			({'type': MOUSEMOTION}, lambda pt, event: camera.rotate(y=event.rel[0]*pygame.mouse.get_pressed()[0], x=event.rel[1]*pygame.mouse.get_pressed()[0])),
+			({'type': MOUSEMOTION, 'also': (K_RSHIFT,)}, lambda pt, event: camera.translate(tx=event.rel[0]*0.2, tz=event.rel[1]*0.2)), # TODO: 
+			# ({'type': KEYDOWN, 'key': K_LEFT}, lambda pt, event: avatar.set(ω=Point(y= 5))),
+			# ({'type': KEYDOWN, 'key': K_RIGHT}, lambda pt, event: avatar.set(ω=Point(y=-5))),
+			# ({'type': KEYUP, 'key': K_LEFT}, lambda pt, event: avatar.set(ω=Point(y= 0))),
+			# ({'type': KEYUP, 'key': K_RIGHT}, lambda pt, event: avatar.set(ω=Point(y= 0))),
 
 			#
-			({'type': KEYDOWN, 'key': K_UP, 'mod': 0}, lambda pt, event: avatar.set(vf= 0.05)),
-			({'type': KEYDOWN, 'key': K_UP, 'mod': 2}, lambda pt, event: avatar.set(vf= 0.1)),
-			({'type': KEYDOWN, 'key': K_DOWN}, lambda pt, event: avatar.set(vf=-0.05)),
-			({'type': KEYUP, 'key': K_UP}, lambda pt, event: avatar.set(vf= 0)),
-			({'type': KEYUP, 'key': K_DOWN}, lambda pt, event: avatar.set(vf= 0)),
+			# ({'type': KEYDOWN, 'key': K_UP, 'mod': 0}, lambda pt, event: avatar.set(vf= 0.05)),
+			# ({'type': KEYDOWN, 'key': K_UP, 'mod': 2}, lambda pt, event: avatar.set(vf= 0.1)),
+			# ({'type': KEYDOWN, 'key': K_DOWN}, lambda pt, event: avatar.set(vf=-0.05)),
+			# ({'type': KEYUP, 'key': K_UP}, lambda pt, event: avatar.set(vf= 0)),
+			# ({'type': KEYUP, 'key': K_DOWN}, lambda pt, event: avatar.set(vf= 0)),
 
 			# ({'type': KEYDOWN, 'key': K_SPACE}, lambda pt, event: avatar.set(v=Point(y=0.1))),
 			# ({'type': KEYUP, 'key': K_SPACE}, lambda pt, event: avatar.set(v=Point(y=-0.1))),
-			({'type': MOUSEMOTION, 'also': (K_RCTRL,)}, lambda pt, event: avatar.set(headR=Point(y=(avatar.headR.y+event.rel[0]*90/720))))):
+			# ({'type': MOUSEMOTION, 'also': (K_RCTRL,)}, lambda pt, event: avatar.set(headR=Point(y=(avatar.headR.y+event.rel[0]*90/720))))):
+			):
 			dispatcher.bind(pattern, handler)
 
 	def bindEvents():
@@ -432,18 +433,18 @@ def bindEvents():
 		# NOTE: K_w is not the scancode for 'w'
 		w, a, s, d = 17, 30, 31, 32
 
-		dispatcher.bind({'type': KEYDOWN, 'unicode': 'w'}, 	lambda pt, event: camera.set(dtz=4, translating=True))
-		dispatcher.bind({'type': KEYDOWN, 'unicode': 'a'}, 	lambda pt, event: camera.set(dry=5, rotating=True))
-		dispatcher.bind({'type': KEYDOWN, 'unicode': 's'}, 	lambda pt, event: camera.set(dtz=-4, translating=True))
-		dispatcher.bind({'type': KEYDOWN, 'unicode': 'd'}, 	lambda pt, event: camera.set(dry=-5, rotating=True))
+		dispatcher.bind({'type': KEYDOWN, 'unicode': 'w'}, 	lambda pt, event: camera.setVelocity(z=4))
+		dispatcher.bind({'type': KEYDOWN, 'unicode': 'a'}, 	lambda pt, event: camera.setVelocity(y=5))
+		dispatcher.bind({'type': KEYDOWN, 'unicode': 's'}, 	lambda pt, event: camera.setVelocity(z=-4))
+		dispatcher.bind({'type': KEYDOWN, 'unicode': 'd'}, 	lambda pt, event: camera.setVelocity(y=-5))
 
 		dispatcher.bind({'type': KEYUP, 'scancode': w}, lambda pt, event: camera.setTranslating(False))
 		dispatcher.bind({'type': KEYUP, 'scancode': a}, lambda pt, event: camera.setRotating(False))
 		dispatcher.bind({'type': KEYUP, 'scancode': s}, lambda pt, event: camera.setTranslating(False))
 		dispatcher.bind({'type': KEYUP, 'scancode': d}, lambda pt, event: camera.setRotating(False))
 
-		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 4}, lambda pt, event: camera.setTranslation(z=camera.tz+1.2))
-		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 5}, lambda pt, event: camera.setTranslation(z=camera.tz-1.2))
+		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 4}, lambda pt, event: camera.translate(z= 1.2))
+		dispatcher.bind({'type': MOUSEBUTTONDOWN, 'button': 5}, lambda pt, event: camera.translate(z=-1.2))
 
 	dispatcher.always = AvatarMain
 	bindAvatarEvents()

@@ -124,11 +124,24 @@ class Point:
 	#Point = namedtuple('Point', 'x y z')
 	# TODO: Extract Point definition (or find pre-existing)
 	# TODO: Optimise (cf __slots__)
+	# TODO: Conversions (eg. asTuple) (?)
 
 	def __init__(self, x=0, y=0, z=0):
 		self.x = x
 		self.y = y
 		self.z = z
+
+
+	def set(self, x=None, y=None, z=None):
+
+		'''
+		Docstring goes here
+
+		'''
+
+		self.x = x or self.x # 
+		self.y = y or self.y # 
+		self.z = z or self.z # 
 
 
 	def euclidean(self, other):
@@ -150,7 +163,7 @@ class Point:
 
 		raise NotImplementedError
 
-		
+
 	def __mult__(self, other):
 
 		'''
@@ -165,7 +178,43 @@ class Point:
 		return Point(self.x*other, self.y*other, self.z*other)
 
 
+	def __add__(self, other):
+
+		'''
+		Adds two vectors (Points) component-wise
+
+		'''
+
+		return Point(self.x+other.x, self.y+other.y, self.z+other.z)
+
+
+	def __iadd__(self, other):
+
+		'''
+		Increments each component by the value of the corresponding component of the right-hand operand
+
+		'''
+
+		self.x += other.x
+		self.y += other.y
+		self.z += other.z
+
+		return self
+
+
+	def __iter__(self):
+
+		'''
+		Docstring goes here
+
+		'''
+
+		for c in (self.x, self.y, self.z):
+			yield c
+
+
 	def __str__(self):
+
 		return 'Point(x=%f, y=%f, z=%f)' % (self.x, self.y, self.z)
 
 
