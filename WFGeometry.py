@@ -327,7 +327,7 @@ def bindEvents():
 	dispatcher 	= EventDispatcher()
 
 	blocks = createBuffers('data/minecraft.obj', groups=True)
-	pieces = { piece : createBuffers('C:/Users/Jonatan/Dropbox/Jon & Jay/Blender/{0}.obj'.format(piece), groups=False)['model'] for piece in ('king', 'Queen', 'Pawn', 'Rook')}
+	pieces = { piece : createBuffers('data/{0}.obj'.format(piece), groups=False)['model'] for piece in ('king', 'Queen', 'Pawn', 'Rook')}
 	# queen  = createBuffers('C:/Users/Jonatan/Dropbox/Jon & Jay/Blender/Queen.obj', groups=False)
 
 	scales = [[1+randint(0, 20)*0.05 for y in range(20)] for x in range(10)]
