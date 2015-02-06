@@ -8,6 +8,7 @@
 
 # TODO | - Manipulating and interacting with vertices
 #        - Queries, intersections, etc.
+#        - Anaglyph 3D
 #
 # SPEC | -
 #        -
@@ -19,6 +20,7 @@ from models import parseOBJ, createBuffers
 
 from OpenGL.GL import *
 from OpenGL.GLU import *
+
 
 
 class Model(object):

@@ -192,12 +192,21 @@ def parseOBJ(filename):
 			raise ValueError('\'{0}\' is not a recognised parameter.'.format(values[0]))
 
 	# TODO: Handle data with no group definitions
+	prev = len(data['groups'])
 	print('Groups', data['groups'])
 	assert len(data['groups']) == 0 or data['groups'][0][1] == 0, 'All faces must belong to a group. (lowest index is {0})'.format(data['groups'][0][1])
 	# Map group names to their lower and upper bounds
+	# TODO: Optimise (the tail slice is very expensive, use islice instead)
 	# TODO: Refactor (or atleast explain) this line
 	data['groups'] = { group : (low, upp) for (group, low), (_, upp) in zip(data['groups'], data['groups'][1:]+[(None, len(data['faces']))])}
+
+	# assert len(data['groups']) == prev
 	print('Groups', data['groups'])
+
+	# Meta data
+	# TODO: Additional meta data
+	data['meta'] = { attribute: len(data[attribute]) for attribute in ('vertices', 'normals', 'faces') }
+
 	return data
 
 
@@ -284,8 +293,12 @@ def main():
 
 	from WFGeometry import InitGL
 	
-	hombre = createBuffers('data/hombre#2.obj', groups=False)
+	# TODO: Fix test code so it doesn't crash each time
 
+	try:
+		hombre = createBuffers('data/hombre#2.obj', groups=False)
+	except OpenGL.GL.Error as e:
+		logger.log('OpenGL has not be initialised (unable to run tests).')
 
 
 

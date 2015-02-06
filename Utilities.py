@@ -119,7 +119,7 @@ class MatrixStack:
 
 
 
-class Point:
+class Point(object):
 	
 	#Point = namedtuple('Point', 'x y z')
 	# TODO: Extract Point definition (or find pre-existing)
@@ -192,6 +192,7 @@ class Point:
 
 		'''
 		Increments each component by the value of the corresponding component of the right-hand operand
+		(destructive addition, cf. self.__add__)
 
 		'''
 

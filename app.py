@@ -7,7 +7,8 @@
 #
 
 # TODO | - Model view controller, over-arching capabilities
-#        -
+#        - Loading worlds from external files (perhaps JSON with filenames and initial positions for now)
+#        - Study carefully: http://gamedev.stackexchange.com/questions/92845/why-do-tutorials-use-different-approaches-to-opengl-rendering
 
 # SPEC | -
 #        -
@@ -116,6 +117,7 @@ class App(object):
 		'''
 
 		# TODO: Look closer at the various OpenGL propertiess
+		# TODO: Legacy API or clean and modern (?)
 
 		pygame.init()
 
